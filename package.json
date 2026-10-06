@@ -24,6 +24,6 @@
     "concurrently": "^9.1.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "unrs-resolver"]
+    "onlyBuiltDependencies": ["esbuild", "unrs-resolver", "@prisma/client", "prisma", "@prisma/engines"]
   }
 }

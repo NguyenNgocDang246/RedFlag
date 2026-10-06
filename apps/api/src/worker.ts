@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { loadEnv } from './load-env';
 import { AppModule } from './app.module';
 
 /**
@@ -9,6 +10,8 @@ import { AppModule } from './app.module';
  * Tách tiến trình để job nền không ảnh hưởng độ trễ API (R8).
  */
 async function bootstrap() {
+  loadEnv();
+
   const app = await NestFactory.createApplicationContext(AppModule);
   await app.init();
 

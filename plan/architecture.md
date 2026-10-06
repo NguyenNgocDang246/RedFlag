@@ -104,8 +104,8 @@ apps/api/src/modules/
 ├── catalog/         (Content Catalog)         — categories, templates, variants, signals, lessons (i18n, R6)
 ├── training/        (Training flow)            — chọn bài, quiz trắc nghiệm, lý thuyết, tiến độ học
 ├── testing/         (Test flow)                — campaign, scheduler, variant rendering per-user
-├── delivery/        (Delivery)                 — mailer, queue producer, bounce/complaint webhook
-├── tracking/        (Tracking — biên an toàn)  — open/click/submit, token, SINH events (không PII)
+├── delivery/        (Delivery)                 — mailer, queue producer, bounce/complaint webhook, INBOUND report@ handler
+├── tracking/        (Tracking — biên an toàn)  — open/click/submit/report, token, SINH events (không PII)
 ├── scoring/         (Scoring & Analytics)      — tiêu thụ events → awareness score, weak_signals, gợi ý
 └── shared-kernel/   (Shared Kernel)            — SignalCode/CategoryCode/EventType, Result, i18n helpers
 ```
@@ -183,6 +183,7 @@ PII-safety không để làm "bằng ý thức" — ràng buộc bằng cấu tr
 - **Trang đích form giả:** input không `name`/không submit giá trị, hoặc submit tới endpoint **ghi đè rỗng** — contract test khẳng định body bị bỏ.
 - **Không log body** ở tracking (logging middleware loại trừ route tracking khỏi body capture).
 - **Token ≠ PII:** opaque, random, hết hạn, thu hồi được; chia sẻ nhầm cũng không lộ user (R5).
+- **Inbound report@ handler:** chỉ trích token (từ subject/plus-address) để khớp campaign rồi sinh event `reported`; **không lưu nội dung/headers/địa chỉ** của mail forward. Mail không khớp → drop, không lưu.
 - Test kiến trúc: integration test gửi payload có "mật khẩu" → assert **không** xuất hiện trong DB lẫn log.
 
 ---

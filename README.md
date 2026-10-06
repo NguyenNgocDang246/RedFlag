@@ -31,9 +31,18 @@ cp .env.example .env
 # 3. Bật hạ tầng (Postgres, Redis, Mailpit)
 pnpm infra:up
 
-# 4. Chạy web + api (tự build shared trước)
+# 4. Tạo schema DB + seed nội dung mẫu (song ngữ EN/VI)
+pnpm --filter @phishgym/api prisma:migrate   # apply migrations
+pnpm --filter @phishgym/api db:seed          # seed Catalog
+
+# 5. Chạy web + api (tự build shared trước)
 pnpm dev
 ```
+
+> App tự đọc `.env` ở gốc repo (qua `apps/api/src/load-env.ts`), nên không cần set
+> `DATABASE_URL` thủ công khi chạy từ `apps/api`.
+
+Thử Catalog API: http://localhost:4000/api/catalog/variants?locale=vi (đổi `locale=en`).
 
 - Web: http://localhost:3000
 - API health: http://localhost:4000/api/health

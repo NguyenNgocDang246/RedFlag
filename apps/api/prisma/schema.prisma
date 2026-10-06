@@ -1,0 +1,354 @@
+// PhishGym — Prisma schema
+// Tổ chức theo bounded context (xem plan/architecture.md §4, §8).
+// Ràng buộc kiến trúc: R2 (events KHÔNG chứa PII), R5 (cô lập theo user),
+// R6 (nội dung là data, đa ngôn ngữ qua bảng *_translations).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────── Enums ───────────────────────────
+
+enum Locale {
+  en
+  vi
+}
+
+enum EventType {
+  opened
+  clicked
+  submitted // chạm bước submit form giả — chỉ là tín hiệu, KHÔNG lưu nội dung (R2)
+  reported
+  ignored
+}
+
+enum TestFrequency {
+  off
+  low
+  medium
+  high
+}
+
+enum DeliveryChannel {
+  email
+}
+
+enum DeliveryStatus {
+  queued
+  sent
+  bounced
+  complained
+  failed
+}
+
+enum CampaignStatus {
+  scheduled
+  sent
+  expired
+}
+
+enum ConsentType {
+  terms
+  test_flow
+}
+
+enum TrackingPurpose {
+  open
+  click
+  submit
+  report // link "Báo cáo lừa đảo" trong email — bấm = sinh event `reported` (tín hiệu tốt). R2: chỉ là tín hiệu, không đụng dữ liệu nhập.
+}
+
+// ─────────────────────── Context: identity ───────────────────────
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  passwordHash   String? // auth logic ở Phase 2
+  name           String? // tuỳ chọn (R9)
+  occupation     String? // tuỳ chọn — cá nhân hoá spear-phishing mô phỏng
+  servicesUsed   String[]  @default([]) // dịch vụ hay dùng (tuỳ chọn)
+  locale         Locale    @default(en)
+  emailVerifiedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  consents      Consent[]
+  trainingPrefs UserTrainingPrefs?
+  testOptin     UserTestOptin?
+  verifications EmailVerification[]
+  campaigns     Campaign[]
+  events        Event[]
+  score         UserScore?
+}
+
+model EmailVerification {
+  id         String    @id @default(cuid())
+  userId     String
+  token      String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Consent {
+  id        String      @id @default(cuid())
+  userId    String
+  type      ConsentType
+  grantedAt DateTime    @default(now())
+  revokedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Cấu hình Training — tách bạch với Test để bật/tắt độc lập (2 flow ⟂).
+model UserTrainingPrefs {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  interests String[] @default([]) // danh sách category code quan tâm
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Opt-in Test flow — độc lập hoàn toàn với Training (R1).
+model UserTestOptin {
+  id        String        @id @default(cuid())
+  userId    String        @unique
+  enabled   Boolean       @default(false)
+  frequency TestFrequency @default(off)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────────────── Context: catalog ───────────────────────
+// Nội dung là DATA (R6). Thêm kiểu lừa = thêm rows, không sửa code.
+// Field hiển thị nằm ở bảng *_translations (đa ngôn ngữ, mặc định en).
+
+model Signal {
+  id        String   @id @default(cuid())
+  code      String   @unique // khớp SignalCode trong @phishgym/shared
+  createdAt DateTime @default(now())
+
+  translations    SignalTranslation[]
+  variantSignals  VariantSignal[]
+  lessons         Lesson[]
+  reportedInEvents Event[]
+}
+
+model SignalTranslation {
+  id          String @id @default(cuid())
+  signalId    String
+  locale      Locale
+  name        String
+  explanation String
+
+  signal Signal @relation(fields: [signalId], references: [id], onDelete: Cascade)
+
+  @@unique([signalId, locale])
+}
+
+model Category {
+  id           String   @id @default(cuid())
+  code         String   @unique // khớp CategoryCode trong @phishgym/shared
+  impersonates String[] @default([]) // ví dụ brand mạo danh (data, đa vùng)
+  createdAt    DateTime @default(now())
+
+  translations CategoryTranslation[]
+  templates    Template[]
+}
+
+model CategoryTranslation {
+  id          String  @id @default(cuid())
+  categoryId  String
+  locale      Locale
+  name        String
+  description String?
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, locale])
+}
+
+model Template {
+  id         String   @id @default(cuid())
+  categoryId String
+  code       String   @unique // ví dụ BANK-001
+  createdAt  DateTime @default(now())
+
+  category     Category              @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  translations TemplateTranslation[]
+  variants     Variant[]
+
+  @@index([categoryId])
+}
+
+model TemplateTranslation {
+  id            String @id @default(cuid())
+  templateId    String
+  locale        Locale
+  subjectPattern String
+  bodyPattern   String
+
+  template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, locale])
+}
+
+model Variant {
+  id              String   @id @default(cuid())
+  templateId      String
+  difficultyLevel Int      @default(1) // 1 = dễ
+  createdAt       DateTime @default(now())
+
+  template     Template             @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  translations VariantTranslation[]
+  signals      VariantSignal[]
+  campaigns    Campaign[]
+
+  @@index([templateId])
+}
+
+model VariantTranslation {
+  id             String @id @default(cuid())
+  variantId      String
+  locale         Locale
+  renderedSubject String
+  renderedBody   String
+
+  variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([variantId, locale])
+}
+
+// Variant ↔ Signal (nhiều-nhiều): metadata để chấm theo signal (R7).
+model VariantSignal {
+  variantId String
+  signalId  String
+
+  variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  signal  Signal  @relation(fields: [signalId], references: [id], onDelete: Cascade)
+
+  @@id([variantId, signalId])
+  @@index([signalId])
+}
+
+model Lesson {
+  id         String   @id @default(cuid())
+  signalId   String? // bài học gắn signal (có thể null)
+  categoryId String? // hoặc gắn category (có thể null)
+  createdAt  DateTime @default(now())
+
+  signal       Signal?             @relation(fields: [signalId], references: [id], onDelete: SetNull)
+  translations LessonTranslation[]
+
+  @@index([signalId])
+  @@index([categoryId])
+}
+
+model LessonTranslation {
+  id       String @id @default(cuid())
+  lessonId String
+  locale   Locale
+  title    String
+  content  String
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, locale])
+}
+
+// ─────────────────────── Context: testing ───────────────────────
+
+model Campaign {
+  id          String          @id @default(cuid())
+  userId      String
+  variantId   String
+  channel     DeliveryChannel @default(email)
+  status      CampaignStatus  @default(scheduled)
+  scheduledAt DateTime
+  sentAt      DateTime?
+  createdAt   DateTime        @default(now())
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variant  Variant         @relation(fields: [variantId], references: [id])
+  delivery Delivery?
+  tokens   TrackingToken[]
+  events   Event[]
+
+  @@index([userId])
+  @@index([scheduledAt])
+}
+
+// ─────────────────────── Context: delivery ───────────────────────
+
+model Delivery {
+  id                String         @id @default(cuid())
+  campaignId        String         @unique
+  status            DeliveryStatus @default(queued)
+  providerMessageId String?
+  updatedAt         DateTime       @updatedAt
+  createdAt         DateTime       @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────── Context: tracking (biên an toàn R2) ───────────────
+
+// Token opaque, per-campaign, hết hạn/thu hồi được (R5). KHÔNG phải PII.
+model TrackingToken {
+  id         String          @id @default(cuid())
+  token      String          @unique
+  campaignId String
+  purpose    TrackingPurpose
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime        @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+}
+
+// Event = TÍN HIỆU. Tuyệt đối KHÔNG có field chứa dữ liệu user nhập (R2).
+model Event {
+  id               String    @id @default(cuid())
+  campaignId       String
+  userId           String
+  type             EventType
+  reportedSignalId String? // khi user "report" + chọn dấu hiệu nghi (trắc nghiệm)
+  createdAt        DateTime  @default(now())
+
+  campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportedSignal Signal?  @relation(fields: [reportedSignalId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId])
+  @@index([userId])
+}
+
+// ─────────────────────── Context: scoring ───────────────────────
+
+// Projection đọc nhanh cho dashboard; nguồn sự thật là bảng events.
+model UserScore {
+  userId         String   @id
+  awarenessScore Float    @default(0)
+  weakSignals    Json     @default("[]") // danh sách signal code yếu
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

@@ -82,6 +82,10 @@ Hai flow **không phụ thuộc nhau về vận hành**: có thể chỉ học m
 ### Phase 2 — Auth, đăng ký & onboarding
 - Đăng ký + double opt-in email verification (R1); đăng nhập; quản lý consent/pause/unsubscribe.
 - Onboarding: **(tuỳ chọn)** khai tên/nghề/dịch vụ hay dùng và chọn locale/vùng nội dung — bỏ qua được, mặc định EN; nếu khai thì dùng để cá nhân hoá spear-phishing mô phỏng. Hai lựa chọn chính, **độc lập**: (a) chủ đề **Training** quan tâm; (b) có **opt-in Test flow** hay không — nếu có thì chọn loại lừa + tần suất. User có thể chỉ chọn Training, hoặc chỉ Test, hoặc cả hai.
+- **Khi bật Test flow, bắt buộc hiện cảnh báo về cách report (xem Phase 4):** nói rõ *đừng dùng nút "Báo cáo lừa đảo" gốc của mail client/nhà cung cấp mail để report bài tập* (chưa có add-on nhận diện; report thật sẽ đi tới nhà cung cấp mail chứ không về PhishGym, và có thể gây rối cho chính hộp thư của user). Hướng dẫn user report bài tập **chỉ qua 2 cách PhishGym hỗ trợ**: forward tới `report@<domain>` hoặc nút trên site.
+- **Xác nhận bằng cách gõ lại câu (type-to-confirm), KHÔNG chỉ tick:** trước khi bật Test, user phải **tự gõ chính xác một câu xác nhận** (vd *"Tôi đã đọc và hiểu"* / *"I have read and understood"*). Nút bật Test chỉ mở khi gõ khớp. Lý do: chủ động đọc hiểu thay vì tick cho qua — đúng tinh thần sản phẩm.
+  - **Đa ngôn ngữ:** câu xác nhận kỳ vọng lấy theo locale của user (EN/VI...), là **chuỗi i18n** (R6/i18n); so khớp nên chuẩn hoá (trim, bỏ phân biệt hoa thường, gộp khoảng trắng) để công bằng cho người dùng phổ thông (R9).
+  - Lưu bản ghi consent kèm **phiên bản text cảnh báo + locale + thời điểm** đã xác nhận.
 - Phân quyền Guest vs User (mục 8).
 - **DoD:** user đăng ký → xác thực email → hoàn tất onboarding (có thể bỏ qua thông tin cá nhân/locale) → có bản ghi consent + cấu hình training + (nếu opt-in) cấu hình test flow (loại/tần suất).
 
@@ -101,8 +105,19 @@ Training gồm **2 phần**:
 - Queue gửi mail (Redis + worker), render variant per-user, gắn **tracking token** per-user/per-campaign (R2/R5).
 - Chỉ chạy cho user đã opt-in Test flow (R1). Tracking endpoints: open (pixel), click (redirect qua token), submit (trang đích chỉ phát tín hiệu "dính" — R2, signal-only, không nhận PII).
 - **Trang "Bạn đã dính!" (interstitial, theme hacker):** sau khi "dính", hiện trang cảnh báo kịch tính báo user vừa mắc bẫy, rồi mới có **nút chuyển sang trang dạy** (teach page chỉ rõ signal bỏ lỡ). Report-correct feedback cũng dùng trắc nghiệm signal như Phase 3.
+
+#### Cơ chế nhận report (phản xạ TỐT — flow nhạy cảm, phải làm cẩn thận)
+Không dùng nút "Báo cáo lừa đảo" gốc của mail client (chưa có add-on; report đó đi tới nhà cung cấp mail, không về PhishGym). PhishGym nhận report qua **đúng 2 cách**:
+
+1. **Forward email tới `report@<domain>`:** inbound mail handler nhận mail forward, khớp về đúng campaign bằng **token nhúng sẵn** khi gửi (`TrackingPurpose.report`) — ưu tiên tag trong subject dạng `[PG-<token>]` và/hoặc plus-addressing `report+<token>@<domain>` vì forward thường giữ được subject và địa chỉ To; token tra ngược ra campaign. Khớp xong sinh event `reported`.
+   - **R2:** chỉ trích tín hiệu khớp campaign; **không lưu nội dung mail forward**, không lưu địa chỉ/nội dung khác. Mail không khớp campaign nào → bỏ qua, không lưu.
+2. **Nút "Tôi đã nhận ra email lừa đảo" trên site:** user mở site, chọn **email bài tập từ danh sách** các bài test gần đây của mình → sinh event `reported` cho campaign đó.
+   - Danh sách chỉ hiện campaign của chính user (R5), nhãn thân thiện (R9), không lộ token.
+
+- Sau khi report (cả 2 cách) → hỏi "dấu hiệu nào khiến bạn nghi?" (trắc nghiệm signal) → lưu `reportedSignalId`.
+- **An toàn chống nhầm lẫn:** mỗi email mô phỏng có footer nhận diện PhishGym + hướng dẫn report đúng 2 cách; nhắc lại cảnh báo "đừng report thật trên mail client".
 - Xử lý bounce/complaint, idempotency, retry.
-- **DoD:** gửi được 1 campaign test tới hộp thư thật của user đã opt-in; mở/bấm/submit sinh `events` đúng; khẳng định server không nhận/không ghi bất kỳ dữ liệu nhập nào (R2).
+- **DoD:** gửi được 1 campaign test tới hộp thư thật của user đã opt-in; mở/bấm/submit sinh `events` đúng; **report qua forward `report@<domain>` và qua nút trên site đều sinh event `reported` đúng campaign**; khẳng định server không nhận/không ghi bất kỳ dữ liệu nhập/nội dung mail nào (R2).
 
 ### Phase 5 — Chấm điểm & phân tích điểm yếu (cầu nối Test → Training)
 - Từ `events` + metadata signal của variant → cập nhật `user_scores` (awareness score + `weak_signals`).

@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { loadEnv } from './load-env';
 import { AppModule } from './app.module';
 
 /**
@@ -8,6 +9,8 @@ import { AppModule } from './app.module';
  * nhưng dùng chung codebase — đặc trưng modular monolith.
  */
 async function bootstrap() {
+  loadEnv();
+
   const app = await NestFactory.create(AppModule);
 
   app.setGlobalPrefix('api');
