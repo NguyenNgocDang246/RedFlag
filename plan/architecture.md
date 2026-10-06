@@ -239,7 +239,7 @@ scoring:   user_scores (projection: awareness_score, weak_signals jsonb)
 
 | Mối quan tâm | Cách làm |
 |---|---|
-| **AuthN/AuthZ** | Session/JWT ở identity; guest không session; tracking no-auth nhưng token-scoped |
+| **AuthN/AuthZ** | Access token JWT ngắn hạn (15') ở cookie + **refresh token lưu DB** (model `Session`, rotating, revoke được) ở identity; guest không session; tracking no-auth nhưng token-scoped |
 | **i18n** | FE next-intl; nội dung đa ngôn ngữ ở DB (catalog) |
 | **Validation** | DTO + class-validator ở biên adapter; domain tự giữ invariant |
 | **Error handling** | Result/Either trong domain; exception filter map ra HTTP + message thân thiện (R9) |

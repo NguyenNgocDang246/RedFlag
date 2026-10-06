@@ -82,9 +82,28 @@ model User {
   trainingPrefs UserTrainingPrefs?
   testOptin     UserTestOptin?
   verifications EmailVerification[]
+  sessions      Session[]
   campaigns     Campaign[]
   events        Event[]
   score         UserScore?
+}
+
+// Phiên đăng nhập (refresh token lưu DB, revoke được).
+// Access token là JWT ngắn hạn (guard verify không cần chạm DB);
+// refresh token opaque, chỉ lưu HASH (sha256) — raw không bao giờ nằm trong DB.
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique // sha256 của refresh token hiện hành (xoay vòng mỗi lần refresh)
+  userAgent  String? // để user nhận diện phiên khi quản lý
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model EmailVerification {
@@ -106,6 +125,11 @@ model Consent {
   type      ConsentType
   grantedAt DateTime    @default(now())
   revokedAt DateTime?
+
+  // Bằng chứng type-to-confirm khi bật Test flow (không phải PII).
+  textVersion      String? // phiên bản text cảnh báo đã hiển thị
+  locale           Locale? // locale của câu xác nhận
+  confirmationText String? // câu user đã gõ lại
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

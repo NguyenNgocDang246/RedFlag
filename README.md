@@ -44,6 +44,24 @@ pnpm dev
 
 Thử Catalog API: http://localhost:4000/api/catalog/variants?locale=vi (đổi `locale=en`).
 
+## API hiện có
+
+**Phase 1 — Catalog (public)**
+- `GET /api/catalog/variants?locale=en|vi` — variant kèm signal, nội dung theo locale
+
+**Phase 2 — Auth & onboarding**
+- `POST /api/auth/register` `{email, password, locale?}` → gửi mail xác thực (xem Mailpit :8025)
+- `POST /api/auth/verify` `{token}` — xác thực email (double opt-in, R1)
+- `POST /api/auth/login` `{email, password}` → set cookie `pg_at` (access JWT 15') + `pg_rt` (refresh)
+- `POST /api/auth/refresh` — xoay vòng refresh token (lưu DB), cấp access + refresh mới
+- `GET  /api/auth/me` — hồ sơ + trạng thái 2 flow (cần đăng nhập)
+- `POST /api/auth/logout` — thu hồi phiên trong DB + xoá cookie
+- `GET  /api/onboarding/test-warning?locale=` — text cảnh báo + câu xác nhận kỳ vọng
+- `POST /api/onboarding` — hồ sơ (tuỳ chọn) + Training interests + Test opt-in (type-to-confirm)
+- `POST /api/test/pause` · `POST /api/test/resume` · `POST /api/test/unsubscribe`
+
+> Bật Test flow yêu cầu **gõ lại đúng câu xác nhận** theo locale (type-to-confirm), không chỉ tick.
+
 - Web: http://localhost:3000
 - API health: http://localhost:4000/api/health
 - Web BFF health (kiểm tra cả web lẫn API): http://localhost:3000/api/health
