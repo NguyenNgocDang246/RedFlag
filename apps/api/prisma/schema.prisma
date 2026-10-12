@@ -50,6 +50,7 @@ enum CampaignStatus {
   scheduled
   sent
   expired
+  cancelled // tests paused / turned off / frequency changed before it went out (R1)
 }
 
 enum ConsentType {
@@ -106,7 +107,8 @@ enum QuizKind {
 model User {
   id              String    @id @default(cuid())
   email           String    @unique
-  passwordHash    String?
+  passwordHash    String? // null for accounts that only sign in with Google
+  googleId        String?   @unique // Google account id (the `sub` claim)
   name            String? // optional (R9)
   occupation      String? // optional — personalizes simulated spear-phishing
   servicesUsed    String[]  @default([]) // frequently used services (optional)
@@ -199,6 +201,7 @@ model UserTestOptin {
   userId    String        @unique
   enabled   Boolean       @default(false)
   frequency TestFrequency @default(off)
+  timezone  String? // IANA zone from the browser when turned on — sending window is local time (R8)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
@@ -257,11 +260,14 @@ model CategoryTranslation {
   @@unique([categoryId, locale])
 }
 
+// Email test scenario (Phase 4). Only `published` templates are sent; variants are the concrete emails.
 model Template {
-  id         String   @id @default(cuid())
+  id         String        @id @default(cuid())
   categoryId String
-  code       String   @unique // e.g. BANK-001
-  createdAt  DateTime @default(now())
+  code       String        @unique // e.g. BANK-001
+  status     ContentStatus @default(draft)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @default(now()) @updatedAt
 
   category     Category              @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   translations TemplateTranslation[]
@@ -271,11 +277,10 @@ model Template {
 }
 
 model TemplateTranslation {
-  id             String @id @default(cuid())
-  templateId     String
-  locale         Locale
-  subjectPattern String
-  bodyPattern    String
+  id         String @id @default(cuid())
+  templateId String
+  locale     Locale
+  title      String // admin-facing name of the scenario (never shown in the email)
 
   template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
@@ -296,12 +301,16 @@ model Variant {
   @@index([templateId])
 }
 
+// One concrete simulated email. Only the display name imitates a sender — the address is always
+// RedFlag's own domain (R3). Body: plain text; blank line = new paragraph, {{name}} = how the user is
+// greeted, [[text]] = the tracked link.
 model VariantTranslation {
-  id              String @id @default(cuid())
-  variantId       String
-  locale          Locale
-  renderedSubject String
-  renderedBody    String
+  id         String @id @default(cuid())
+  variantId  String
+  locale     Locale
+  senderName String @default("")
+  subject    String
+  body       String
 
   variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
@@ -488,6 +497,8 @@ model Campaign {
   variantId   String
   channel     DeliveryChannel @default(email)
   status      CampaignStatus  @default(scheduled)
+  locale      Locale          @default(en) // content language, fixed when the campaign is created
+  isTest      Boolean         @default(false) // admin "send to me" preview — not scored
   scheduledAt DateTime
   sentAt      DateTime?
   createdAt   DateTime        @default(now())
@@ -498,8 +509,8 @@ model Campaign {
   tokens   TrackingToken[]
   events   Event[]
 
-  @@index([userId])
-  @@index([scheduledAt])
+  @@index([userId, status])
+  @@index([status, scheduledAt])
 }
 
 // ─────────────────────── Context: delivery ───────────────────────

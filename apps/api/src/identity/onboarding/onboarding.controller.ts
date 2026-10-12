@@ -3,7 +3,7 @@ import { Locale } from '@prisma/client';
 import { DEFAULT_LOCALE, isSupportedLocale } from '@redflag/shared';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard, type AuthedUser } from '../auth/jwt-auth.guard';
-import { expectedPhrase, TEST_WARNING_I18N } from '../confirmation';
+import { expectedPhrase, reportChannels, warningText } from '../confirmation';
 import { OnboardingDto } from '../dto/onboarding.dto';
 import { OnboardingService } from './onboarding.service';
 
@@ -16,10 +16,14 @@ export class OnboardingController {
   warning(@Query('locale') localeParam?: string) {
     const locale: Locale =
       localeParam && isSupportedLocale(localeParam) ? (localeParam as Locale) : DEFAULT_LOCALE;
+    const channels = reportChannels();
     return {
       locale,
-      warning: TEST_WARNING_I18N[locale].warning,
+      warning: warningText(locale),
       confirmPhrase: expectedPhrase(locale),
+      // So the UI can turn the two routes into a link and a copyable address.
+      reportPageUrl: channels.pageUrl,
+      reportAddress: channels.address,
     };
   }
 

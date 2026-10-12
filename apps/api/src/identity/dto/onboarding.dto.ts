@@ -81,6 +81,12 @@ export class EnableTestDto {
   @IsOptional()
   @IsIn(SUPPORTED_LOCALES)
   locale?: 'en' | 'vi';
+
+  /** Browser IANA time zone (e.g. Asia/Ho_Chi_Minh) — tests arrive in local daytime. Checked in the service. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  timezone?: string;
 }
 
 export class TestFrequencyDto {

@@ -22,7 +22,10 @@ import {
   type TestStatus,
   type TestWarning,
 } from '@/lib/api';
-import { ME_T } from '@/lib/i18n';
+import Link from 'next/link';
+import { ME_T, REPORT_T } from '@/lib/i18n';
+import { LinkedText, reportLinks } from '@/components/linked-text';
+import { splitParagraphs } from '@/lib/text';
 import s from './me.module.css';
 
 const LEVELS: TestFrequencyLevel[] = ['low', 'medium', 'high'];
@@ -133,7 +136,11 @@ export function TestSettings({
               <strong>
                 <TriangleAlert size={18} aria-hidden /> {t.howToReport}
               </strong>
-              <p>{warning.warning}</p>
+              {splitParagraphs(warning.warning).map((para) => (
+                <p key={para}>
+                  <LinkedText text={para} links={reportLinks(warning)} />
+                </p>
+              ))}
             </div>
           )}
 
@@ -174,6 +181,11 @@ export function TestSettings({
               void run(() => setTestFrequency(f));
             })}
           {status.state === 'paused' && <p className={s.note}>{t.pausedNote}</p>}
+
+          {/* Where to report one — the same place the instructions name. */}
+          <p className={s.muted}>
+            <Link href={`/report?locale=${locale}`}>{REPORT_T[locale].title}</Link>
+          </p>
 
           <div className={s.actions}>
             {status.state === 'on' ? (

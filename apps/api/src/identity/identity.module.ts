@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { ThrottleModule } from '../throttle/throttle.module';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { SessionService } from './auth/session.service';
+import { GoogleService } from './auth/google.service';
+import { ResetTokenService } from './auth/reset-token';
 import { ACCESS_TTL_SEC, JwtAuthGuard } from './auth/jwt-auth.guard';
 import { OptionalJwtGuard } from './auth/optional-jwt.guard';
 import { OnboardingController } from './onboarding/onboarding.controller';
@@ -25,11 +28,15 @@ import { TestSettingsService } from './consent/test-settings.service';
         };
       },
     }),
+    // The auth routes are rate limited per route (see AuthController).
+    ThrottleModule,
   ],
   controllers: [AuthController, OnboardingController, TestSettingsController],
   providers: [
     AuthService,
     SessionService,
+    ResetTokenService,
+    GoogleService,
     OnboardingService,
     TestSettingsService,
     JwtAuthGuard,

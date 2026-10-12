@@ -13,14 +13,29 @@ const LANGUAGES = [
   { value: 'vi', label: 'Tiếng Việt' },
 ];
 
+/** A training topic to choose from — the quiz categories, as the practice picker lists them. */
+export interface TopicOption {
+  code: string;
+  name: string;
+}
+
 /** Personal info — every field optional (R9). Saving a different language switches the page to it. */
-export function ProfileForm({ me, locale }: { me: Me; locale: Locale }) {
+export function ProfileForm({
+  me,
+  locale,
+  topics,
+}: {
+  me: Me;
+  locale: Locale;
+  topics: TopicOption[];
+}) {
   const t = ME_T[locale];
   const router = useRouter();
   const [name, setName] = useState(me.name ?? '');
   const [occupation, setOccupation] = useState(me.occupation ?? '');
   const [services, setServices] = useState(me.servicesUsed.join(', '));
   const [language, setLanguage] = useState<Locale>(me.locale);
+  const [interests, setInterests] = useState<string[]>(me.training.interests);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const onSubmit = async (e: FormEvent) => {
@@ -35,6 +50,7 @@ export function ProfileForm({ me, locale }: { me: Me; locale: Locale }) {
           .map((x) => x.trim())
           .filter(Boolean),
         locale: language,
+        interests,
       });
       setStatus('saved');
       if (language !== locale) router.replace(`/me/profile?locale=${language}`);
@@ -50,6 +66,11 @@ export function ProfileForm({ me, locale }: { me: Me; locale: Locale }) {
       set(v);
       if (status !== 'saving') setStatus('idle');
     };
+
+  const toggleTopic = (code: string) =>
+    edit(setInterests)(
+      interests.includes(code) ? interests.filter((c) => c !== code) : [...interests, code],
+    );
 
   return (
     <section className={s.card}>
@@ -97,15 +118,31 @@ export function ProfileForm({ me, locale }: { me: Me; locale: Locale }) {
           />
         </div>
 
+        {topics.length > 0 && (
+          <div className={`${s.field} ${s.fieldWide}`}>
+            <fieldset className={s.choices}>
+              <legend className={s.label}>{t.interests}</legend>
+              {topics.map((topic) => (
+                <label
+                  key={topic.code}
+                  className={`${s.choice} ${interests.includes(topic.code) ? s.choiceOn : ''}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={interests.includes(topic.code)}
+                    onChange={() => toggleTopic(topic.code)}
+                  />
+                  {topic.name}
+                </label>
+              ))}
+            </fieldset>
+            <span className={s.hint}>{t.interestsHint}</span>
+          </div>
+        )}
+
         <div className={`${s.actions} ${s.fieldWide}`}>
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={status === 'saving'}
-          >
-            {status === 'saving' && (
-              <LoaderCircle size={18} className={s.spin} aria-hidden />
-            )}
+          <button type="submit" className="btn btn-primary" disabled={status === 'saving'}>
+            {status === 'saving' && <LoaderCircle size={18} className={s.spin} aria-hidden />}
             {status === 'saving' ? t.saving : t.save}
           </button>
           {status === 'saved' && (

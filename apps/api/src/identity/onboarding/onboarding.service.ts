@@ -3,6 +3,7 @@ import { Locale, TestFrequency } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TestSettingsService } from '../consent/test-settings.service';
 import { OnboardingDto } from '../dto/onboarding.dto';
+import { saveInterests } from '../training-prefs';
 
 @Injectable()
 export class OnboardingService {
@@ -28,18 +29,8 @@ export class OnboardingService {
       });
     }
 
-    // Training prefs (independent of Test). Categories are data → filtered against the DB.
-    const known = await this.prisma.category.findMany({
-      where: { code: { in: dto.training.interests } },
-      select: { code: true },
-    });
-    const knownCodes = new Set(known.map((c) => c.code));
-    const interests = dto.training.interests.filter((c) => knownCodes.has(c));
-    await this.prisma.userTrainingPrefs.upsert({
-      where: { userId },
-      create: { userId, interests },
-      update: { interests },
-    });
+    // Training prefs (independent of Test). Same saver the /me profile form uses.
+    const interests = await saveInterests(this.prisma, userId, dto.training.interests);
 
     // Test flow (independent). Enabling requires the exact confirmation phrase (type-to-confirm).
     if (dto.test.enabled) {

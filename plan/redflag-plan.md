@@ -177,6 +177,27 @@ Không dùng nút "Báo cáo lừa đảo" gốc của mail client (chưa có ad
 - Sau khi report (cả 2 cách) → hỏi "dấu hiệu nào khiến bạn nghi?" (trắc nghiệm signal) → lưu `reportedSignalId`.
 - **An toàn chống nhầm lẫn:** mỗi email mô phỏng có footer nhận diện RedFlag + hướng dẫn report đúng 2 cách; nhắc lại cảnh báo "đừng report thật trên mail client".
 - Xử lý bounce/complaint, idempotency, retry.
+- **Tiến độ (2026-10-12) — đã làm đợt (a): soạn → lên lịch → gửi → theo dõi → trang dạy.**
+  - **Chốt lại R3 (quan trọng):** KHÔNG để footer "đây là bài tập" trong thân email — người học sẽ học mẹo kéo xuống cuối tìm footer thay vì nhìn dấu hiệu. Dấu nhận diện chuyển thành **header kỹ thuật** `X-RedFlag-Simulation` (`SIM_EMAIL_HEADERS`), đủ để đối soát mà không phá bài tập. Sự đồng ý lấy ở lúc bật (gõ lại câu xác nhận), không lấy lại trong từng thư.
+  - **Chốt:** bấm link = dính luôn (như KnowBe4), KHÔNG dựng trang đăng nhập giả → tuyệt đối không có chỗ nào nhận dữ liệu nhập (R2 mạnh hơn kế hoạch gốc).
+  - **Không hard-code domain:** `TRACKING_PUBLIC_URL` (host của link theo dõi — phải là domain RedFlag nhưng **không mang tên sản phẩm**, nếu không rê chuột là lộ), `MAIL_FROM`, `WEB_PUBLIC_URL`, `SEND_WINDOW_START/END`, `WORKER_TICK_MS`. Gom ở `DeliveryConfig`.
+  - Schema: `Template.status` (nháp/xuất bản), `TemplateTranslation.title`, `VariantTranslation.senderName/subject/body`, `Campaign.locale/isTest`, `CampaignStatus.cancelled`, `UserTestOptin.timezone`.
+  - `renderSimEmail` (packages/shared): `{{name}}`, `[[link]]`, đoạn cách dòng trống; escape HTML; dùng chung cho worker và xem trước ở admin.
+  - Lịch gửi: `nextSendAt` — ngẫu nhiên ±40% quanh tần suất, rơi vào khung giờ **địa phương của user** (múi giờ lấy từ trình duyệt lúc bật), xử lý đúng DST.
+  - Gửi: worker chạy theo chu kỳ, **không dùng BullMQ** — khoá chống gửi trùng bằng ràng buộc duy nhất `Delivery.campaignId` (đủ cho R8: idempotent, không gửi trùng). Thêm BullMQ khi cần retry/scale.
+  - **Kiểm tra lại đồng ý ngay trước khi gửi**, không chỉ lúc lên lịch; tạm dừng/tắt/đổi tần suất → huỷ campaign đang chờ ngay.
+  - Theo dõi: `/api/o/:token` (pixel), `/api/t/:token` (bấm → `clicked` → chuyển sang `/caught`), `/api/t/:token/teach` (nội dung trang dạy, **không trả dữ liệu cá nhân**). Mỗi loại event chỉ ghi 1 lần/campaign.
+  - Admin API: `GET /admin/test-emails`, `.../preview`, `.../send-to-me` (chỉ gửi cho chính admin, không nhận địa chỉ người nhận).
+  - Web `/caught` (theme đen-đỏ): **mở đầu bằng trấn an** ("không có chuyện gì xảy ra, bạn không mất gì") rồi mới dạy — R9, người lớn tuổi có thể hoảng thật. Ẩn header/footer trên route này.
+  - **Nhận report qua nút trên site (2026-10-12):** trang riêng `/report` — liệt kê email bài tập của chính user (R5, không lộ token), bấm 1 nút để báo → event `reported`, rồi hỏi "dấu hiệu nào khiến bạn nghi?" bằng **trắc nghiệm** từ đúng bộ dấu hiệu của bài đó (R2, không có ô nhập text), bỏ qua được. Link vào từ footer và từ mục "Thử qua email".
+  - **Hướng dẫn báo cáo không còn viết cứng:** `REPORT_EMAIL` + `WEB_PUBLIC_URL` → `reportChannels()`; đoạn cảnh báo nói rõ **địa chỉ trang có nút báo** và địa chỉ forward. Admin `/admin/test-emails` hiện **đúng đoạn người học nhận được** + câu phải gõ lại + link mở trang báo cáo, để nội dung dặn và sản phẩm không lệch nhau. `CONFIRMATION_TEXT_VERSION` lên `v2`.
+  - Admin `/admin/test-emails`: danh sách mẫu (nháp/xuất bản, người gửi, dấu hiệu), **xem trước** render y như email thật trong iframe `sandbox=""`, **gửi cho tôi** (chỉ gửi cho chính admin, không nhận địa chỉ người nhận).
+  - **Nhận report qua forward (2026-10-12) — Resend Inbound:** `REPORT_EMAIL` nằm trên domain nhận mail của Resend, webhook `email.received` → `POST /api/inbound/resend`, kiểm chữ ký Svix bằng `RESEND_WEBHOOK_SECRET` (tự tính HMAC, không thêm thư viện; không có secret → tắt, trả 503).
+    - **Chốt cách khớp: người gửi + tiêu đề**, KHÔNG dùng `[PG-<token>]` trong tiêu đề (lộ bài tập, cùng lý do bỏ footer) và KHÔNG dùng `report+<token>@` (user tự gõ `report@` khi forward). `from` = email tài khoản; tiêu đề bỏ `Fwd:/FW:/TR:/WG:/Re:…` rồi so với tiêu đề campaign đã gửi trong 30 ngày, đúng ngôn ngữ đã gửi. Trùng nhiều campaign → lấy campaign mới nhất chưa báo.
+    - **R2:** chỉ đọc metadata của webhook, không gọi API lấy thân mail, không lưu gì; log chỉ ghi khớp hay không khớp.
+    - Rủi ro đã chấp nhận: webhook không có SPF/DKIM nên `from` giả được. Tệ nhất là tạo một report giả, và phải biết cả email lẫn tiêu đề bài tập.
+    - Forward thì không hỏi được "dấu hiệu nào" → trên `/report`, mục đã báo mà chưa chọn dấu hiệu có nút "Dấu hiệu nào khiến bạn nghi?".
+  - **Còn lại:** giao diện soạn/sửa Template/Variant (hiện mới xem + gửi thử), xử lý bounce/complaint, retry.
 - **DoD:** gửi được 1 campaign test tới hộp thư thật của user đã opt-in; mở/bấm/submit sinh `events` đúng; **report qua forward `report@<domain>` và qua nút trên site đều sinh event `reported` đúng campaign**; khẳng định server không nhận/không ghi bất kỳ dữ liệu nhập/nội dung mail nào (R2).
 
 ### Phase 5 — Chấm điểm & phân tích điểm yếu (cầu nối Test → Training)

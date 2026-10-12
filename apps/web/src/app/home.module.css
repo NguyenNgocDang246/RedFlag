@@ -4,6 +4,23 @@
 }
 
 /* ── Hero ── */
+/* Plain label above the slogan: the headline is evocative, this says what the site actually is. */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 14px;
+  font-weight: 700;
+}
+.eyebrow svg {
+  flex: 0 0 auto;
+}
+
 .heroWrap {
   position: relative;
 }
@@ -38,15 +55,20 @@
   padding-top: 24px;
 }
 .headline {
-  margin: 20px 0 20px;
+  margin: 14px 0 20px;
   font-size: clamp(36px, 5.4vw, 60px);
-  line-height: 1.06;
+  /* Vietnamese stacks marks above AND descenders below, so the line needs more room than Latin. */
+  line-height: 1.16;
   font-weight: 800;
   letter-spacing: -0.035em;
 }
 .highlight {
   display: block;
   white-space: nowrap;
+  /* The gradient is clipped to the text's own box, which cuts the tails off g/y. The padding gives
+     them room; the negative margin keeps the spacing below the heading unchanged. */
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
   background: linear-gradient(100deg, #ef4444 0%, #b91c1c 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -80,6 +102,10 @@
   border-radius: var(--radius-lg);
   background: linear-gradient(160deg, #fff1f1, #fff8f8);
   border: 1px solid #fde0e0;
+}
+/* The cards stack as one block, so they share the same surface. */
+.heroNote + .heroNote {
+  margin-top: 12px;
 }
 .heroNoteIcon {
   flex: 0 0 auto;
@@ -312,8 +338,11 @@
   font-weight: 800;
 }
 .finalCard p {
-  margin: 0 0 28px;
+  /* Capped and centred: across the full card the line would be far too long to read comfortably. */
+  max-width: 44rem;
+  margin: 0 auto 28px;
   font-size: 18px;
+  line-height: 1.6;
   opacity: 0.9;
 }
 .finalBtn {

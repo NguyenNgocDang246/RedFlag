@@ -28,6 +28,13 @@ export function useLocale(): Locale {
  * Shared header. `initialMe` is server-rendered (no UI flash);
  * if the server saw no user (expired access token), the client tries refresh exactly once.
  */
+/**
+ * Pages that render as a full-screen moment of their own, with no site chrome around them.
+ * `/caught` is where a click on a simulated test email lands.
+ */
+const BARE_ROUTES = ['/caught'];
+const isBareRoute = (pathname: string) => BARE_ROUTES.some((r) => pathname.startsWith(r));
+
 export function SiteHeader({ initialMe }: { initialMe: Me | null }) {
   const locale = useLocale();
   const t = NAV_T[locale];
@@ -75,6 +82,8 @@ export function SiteHeader({ initialMe }: { initialMe: Me | null }) {
     router.refresh();
   };
   const initial = me ? (me.name || me.email).charAt(0).toUpperCase() : '';
+
+  if (isBareRoute(pathname)) return null;
 
   return (
     <header className={s.header}>
@@ -177,7 +186,9 @@ export function SiteHeader({ initialMe }: { initialMe: Me | null }) {
 }
 
 export function SiteFooter({ me }: { me: Me | null }) {
+  const pathname = usePathname();
   const locale = useLocale();
+  if (isBareRoute(pathname)) return null;
   const t = NAV_T[locale];
   const q = `?locale=${locale}`;
   return (
@@ -196,6 +207,7 @@ export function SiteFooter({ me }: { me: Me | null }) {
           <Link href={`/library${q}`}>{t.library}</Link>
           <Link href={`/contest${q}`}>{t.contest}</Link>
           <Link href={`/handbook${q}`}>{t.handbook}</Link>
+          <Link href={`/report${q}`}>{t.report}</Link>
           {!me && (
             <>
               <Link href={`/login${q}`}>{t.login}</Link>

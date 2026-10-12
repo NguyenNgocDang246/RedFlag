@@ -1,0 +1,226 @@
+.main {
+  max-width: 760px;
+  padding: 40px 24px 56px;
+}
+.head {
+  margin-bottom: 24px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 28px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.card + .card {
+  margin-top: 20px;
+}
+.card > :global(.btn) {
+  align-self: flex-start;
+}
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+}
+.cardTitle svg {
+  color: var(--accent);
+}
+.muted {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+  color: var(--warn);
+  line-height: 1.55;
+}
+.warn svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+/* The received emails */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.itemMain {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.subject {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.meta {
+  font-size: 13px;
+  color: var(--muted);
+}
+.clicked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--accent-strong);
+}
+.reportedCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.pickLink {
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: var(--accent-strong);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--success);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* After reporting: thanks + which sign gave it away */
+.follow {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--success-soft);
+}
+.thanks {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  color: var(--success);
+  line-height: 1.55;
+}
+.thanks svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+.askTitle {
+  margin: 4px 0 0;
+  font-weight: 700;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chip:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+.skip {
+  min-height: 38px;
+  padding: 0 12px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+  color: var(--muted);
+  font-size: 14px;
+  text-decoration: none;
+}
+.quiet:hover {
+  color: var(--fg);
+}
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-weight: 600;
+}
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .main {
+    padding: 24px 16px 40px;
+  }
+  .card {
+    padding: 20px;
+  }
+  .item {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .item > :global(.btn),
+  .reportedCol {
+    justify-self: start;
+    align-items: flex-start;
+  }
+}

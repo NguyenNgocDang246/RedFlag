@@ -6,8 +6,10 @@ import { MailCheck, UserPlus } from 'lucide-react';
 import { ApiError, register, type Locale } from '@/lib/api';
 import { AUTH_T } from '@/lib/i18n';
 import { AuthCard, authStyles as s, EmailField, isEmail, PasswordField } from '@/components/auth-ui';
+import { GoogleButton } from '@/components/google-button';
+import { ResendVerification } from '@/components/resend-verification';
 
-export function RegisterForm({ locale }: { locale: Locale }) {
+export function RegisterForm({ locale, google }: { locale: Locale; google: boolean }) {
   const t = AUTH_T[locale];
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,7 +27,9 @@ export function RegisterForm({ locale }: { locale: Locale }) {
       await register(email.trim(), password, locale);
       setSentTo(email.trim());
     } catch (err) {
-      setError(err instanceof ApiError && err.status === 409 ? t.errExists : t.errGeneric);
+      if (err instanceof ApiError && err.status === 409) setError(t.errExists);
+      else if (err instanceof ApiError && err.status === 429) setError(t.errTooMany);
+      else setError(t.errGeneric);
     } finally {
       setBusy(false);
     }
@@ -35,12 +39,22 @@ export function RegisterForm({ locale }: { locale: Locale }) {
     return (
       <AuthCard icon={<MailCheck size={26} />} title={t.checkTitle} sub={t.checkBody(sentTo)}>
         <p className={s.hint}>{t.checkHint}</p>
+        <div className={s.noticeRow}>
+          <ResendVerification
+            email={sentTo}
+            locale={locale}
+            buttonClass={s.linkBtn}
+            statusClass={s.hint}
+            errorClass={s.hint}
+          />
+        </div>
       </AuthCard>
     );
   }
 
   return (
     <AuthCard icon={<UserPlus size={26} />} title={t.registerTitle} sub={t.registerSub}>
+      {google && <GoogleButton locale={locale} />}
       <form onSubmit={submit} noValidate>
         {error && (
           <p className={s.error} role="alert">

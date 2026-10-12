@@ -23,7 +23,7 @@ export class TestSettingsController {
   @HttpCode(200)
   async enable(@CurrentUser() user: AuthedUser, @Body() dto: EnableTestDto) {
     const { locale } = await this.prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { locale: true } });
-    return this.settings.enable(user.id, dto.locale ?? locale, dto.confirmationText, dto.frequency);
+    return this.settings.enable(user.id, dto.locale ?? locale, dto.confirmationText, dto.frequency, dto.timezone);
   }
 
   @Patch('frequency')

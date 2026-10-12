@@ -282,6 +282,7 @@ async function clearCatalog() {
   await prisma.quizQuestionSignal.deleteMany();
   await prisma.quizQuestionTranslation.deleteMany();
   await prisma.quizQuestion.deleteMany();
+  await prisma.campaign.deleteMany(); // events, tokens, deliveries cascade
   await prisma.variantSignal.deleteMany();
   await prisma.variantTranslation.deleteMany();
   await prisma.variant.deleteMany();
@@ -360,29 +361,24 @@ async function main() {
   }
 
 
-  // Template BANK-001 + 1 variant
+  // ─── Email test templates (Phase 4) ───
+  // Body format: blank line = new paragraph, {{name}} = how the user is greeted, [[text]] = the tracked link.
+  // Only the sender's display name imitates a brand; the address is always RedFlag's own domain (R3).
   const bankTemplate = await prisma.template.create({
     data: {
       code: 'BANK-001',
       categoryId: categoryIdByCode[CategoryCode.BANK],
+      status: 'published',
       translations: {
         create: [
-          {
-            locale: 'en',
-            subjectPattern: '[{bank}] Your account will be locked',
-            bodyPattern: 'We detected unusual activity. Verify within 24h to avoid a lock.',
-          },
-          {
-            locale: 'vi',
-            subjectPattern: '[{bank}] Tài khoản của bạn sắp bị khoá',
-            bodyPattern: 'Chúng tôi phát hiện hoạt động bất thường. Xác minh trong 24h để tránh bị khoá.',
-          },
+          { locale: 'en', title: 'Bank: account about to be locked' },
+          { locale: 'vi', title: 'Ngân hàng: tài khoản sắp bị khoá' },
         ],
       },
     },
   });
 
-  const bankVariant = await prisma.variant.create({
+  await prisma.variant.create({
     data: {
       templateId: bankTemplate.id,
       difficultyLevel: 1,
@@ -390,45 +386,39 @@ async function main() {
         create: [
           {
             locale: 'en',
-            renderedSubject: '[SecureBank] Your account will be locked in 24 hours',
-            renderedBody:
-              'Dear customer, unusual activity was detected. Confirm your details at secure-bank-verify.example to avoid suspension.',
+            senderName: 'SaoMai Bank Security',
+            subject: 'Your account will be locked in 24 hours',
+            body:
+              'Dear customer,\n\nWe noticed unusual sign-in activity on your account. To protect your money, your account will be locked in 24 hours unless you confirm your details.\n\n[[Confirm my account]]\n\nSaoMai Bank Security Team',
           },
           {
             locale: 'vi',
-            renderedSubject: '[SecureBank] Tài khoản của bạn sẽ bị khoá trong 24 giờ',
-            renderedBody:
-              'Kính gửi quý khách, phát hiện hoạt động bất thường. Vui lòng xác nhận thông tin tại secure-bank-verify.example để tránh bị tạm khoá.',
+            senderName: 'Bảo mật Ngân hàng Sao Mai',
+            subject: 'Tài khoản của quý khách sẽ bị khoá sau 24 giờ',
+            body:
+              'Kính gửi quý khách,\n\nHệ thống ghi nhận đăng nhập bất thường vào tài khoản của quý khách. Để bảo vệ tiền của quý khách, tài khoản sẽ bị khoá sau 24 giờ nếu chưa xác nhận thông tin.\n\n[[Xác nhận tài khoản]]\n\nBộ phận Bảo mật Ngân hàng Sao Mai',
           },
         ],
       },
       signals: {
         create: [
           { signalId: signalIdByCode[SignalCode.URGENCY] },
-          { signalId: signalIdByCode[SignalCode.LOOKALIKE_DOMAIN] },
           { signalId: signalIdByCode[SignalCode.GENERIC_GREETING] },
+          { signalId: signalIdByCode[SignalCode.SENDER_MISMATCH] },
         ],
       },
     },
   });
 
-  // Template SHIP-001 + 1 variant
   const shipTemplate = await prisma.template.create({
     data: {
       code: 'SHIP-001',
       categoryId: categoryIdByCode[CategoryCode.SHIP],
+      status: 'published',
       translations: {
         create: [
-          {
-            locale: 'en',
-            subjectPattern: '[{courier}] Parcel held — pay a small fee',
-            bodyPattern: 'Your parcel is on hold. Pay a redelivery fee to release it.',
-          },
-          {
-            locale: 'vi',
-            subjectPattern: '[{courier}] Bưu kiện bị giữ — đóng phí nhỏ',
-            bodyPattern: 'Bưu kiện của bạn đang bị giữ. Đóng phí giao lại để nhận hàng.',
-          },
+          { locale: 'en', title: 'Delivery: parcel held for a small fee' },
+          { locale: 'vi', title: 'Giao hàng: bưu kiện bị giữ, đòi phí nhỏ' },
         ],
       },
     },
@@ -442,22 +432,25 @@ async function main() {
         create: [
           {
             locale: 'en',
-            renderedSubject: 'Your parcel is waiting — small customs fee required',
-            renderedBody:
-              'We could not deliver your parcel. Pay the redelivery fee at track-parcel-pay.example.',
+            senderName: 'QuickShip Delivery',
+            subject: 'We couldn’t deliver your parcel',
+            body:
+              'Hi {{name}},\n\nWe tried to deliver your parcel today but an unpaid fee of $1.99 is holding it at our depot. Pay before 11:59 pm tonight or the parcel will be returned to the sender.\n\n[[Pay and reschedule delivery]]\n\nQuickShip Customer Care',
           },
           {
             locale: 'vi',
-            renderedSubject: 'Bưu kiện của bạn đang chờ — cần đóng phí hải quan nhỏ',
-            renderedBody:
-              'Chúng tôi không giao được bưu kiện. Đóng phí giao lại tại track-parcel-pay.example.',
+            senderName: 'Giao Nhanh',
+            subject: 'Bưu kiện của bạn chưa giao được',
+            body:
+              'Chào {{name}},\n\nHôm nay chúng tôi đã đến giao hàng nhưng bưu kiện đang bị giữ ở kho vì còn thiếu phí 25.000đ. Thanh toán trước 23:59 hôm nay, nếu không bưu kiện sẽ bị hoàn về người gửi.\n\n[[Thanh toán và hẹn lại ngày giao]]\n\nChăm sóc khách hàng Giao Nhanh',
           },
         ],
       },
       signals: {
         create: [
-          { signalId: signalIdByCode[SignalCode.HIDDEN_LINK] },
           { signalId: signalIdByCode[SignalCode.URGENCY] },
+          { signalId: signalIdByCode[SignalCode.SENDER_MISMATCH] },
+          { signalId: signalIdByCode[SignalCode.MISSING_DETAILS] },
         ],
       },
     },
@@ -1018,7 +1011,6 @@ async function main() {
     const { count } = await prisma.user.updateMany({ where: { email: { in: adminEmails } }, data: { role: 'admin' } });
     console.log(`Admin role: ${count} user(s)`);
   }
-  console.log('Sample bank variant id:', bankVariant.id);
 }
 
 main()

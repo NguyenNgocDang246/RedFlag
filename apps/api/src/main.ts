@@ -11,7 +11,8 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   loadEnv();
 
-  const app = await NestFactory.create(AppModule);
+  // rawBody: the inbound mail webhook verifies its signature over the exact bytes sent.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   app.setGlobalPrefix('api');
   app.use(cookieParser());

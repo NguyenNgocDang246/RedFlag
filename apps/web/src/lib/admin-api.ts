@@ -242,3 +242,36 @@ export const errorText = (e: unknown) =>
     : uiLocale() === 'vi'
       ? 'Có lỗi xảy ra'
       : 'Something went wrong';
+
+// ─── Test emails (Phase 4) ───
+
+export interface AdminTestEmailVariant {
+  id: string;
+  difficulty: number;
+  locales: ('en' | 'vi')[];
+  subject: string;
+  senderName: string;
+  signals: string[];
+}
+
+export interface AdminTestEmail {
+  id: string;
+  code: string;
+  status: ContentStatus;
+  title: string;
+  category: { code: string; name: string } | null;
+  variants: AdminTestEmailVariant[];
+}
+
+export interface TestEmailPreview {
+  senderName: string;
+  subject: string;
+  html: string;
+  text: string;
+}
+
+export const listTestEmails = () => call<AdminTestEmail[]>('GET', '/test-emails');
+export const previewTestEmail = (variantId: string) =>
+  call<TestEmailPreview>('GET', `/test-emails/${variantId}/preview`);
+export const sendTestEmailToMe = (variantId: string) =>
+  call<{ ok: true; campaignId: string }>('POST', `/test-emails/${variantId}/send-to-me`);

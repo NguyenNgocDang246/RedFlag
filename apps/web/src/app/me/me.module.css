@@ -445,6 +445,12 @@ a.row:hover {
   margin: 6px 0 0;
   line-height: 1.55;
 }
+.warning a {
+  color: var(--accent-strong);
+  font-weight: 600;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
 
 @media (max-width: 800px) {
   .shell {

@@ -3,6 +3,17 @@ import { Locale, TestFrequency } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CONFIRMATION_TEXT_VERSION, confirmationMatches, expectedPhrase } from '../confirmation';
 
+/** A time zone the runtime knows (IANA name); anything else is dropped. */
+export function validTimeZone(tz: string | undefined): string | undefined {
+  if (!tz) return undefined;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+    return tz;
+  } catch {
+    return undefined;
+  }
+}
+
 /** on = tests are sent; paused = consent kept, nothing sent; off = never enabled or unsubscribed. */
 export type TestState = 'on' | 'paused' | 'off';
 
@@ -37,7 +48,13 @@ export class TestSettingsService {
    * Turns tests on (R1): requires the confirmation phrase retyped exactly (type-to-confirm), and
    * records a consent with the warning text version + locale. Used by onboarding and the /me page.
    */
-  async enable(userId: string, locale: Locale, confirmationText: string | undefined, frequency?: TestFrequency) {
+  async enable(
+    userId: string,
+    locale: Locale,
+    confirmationText: string | undefined,
+    frequency?: TestFrequency,
+    timezone?: string,
+  ) {
     if (!confirmationMatches(confirmationText, locale)) {
       throw new BadRequestException({
         message: 'Câu xác nhận chưa đúng / Confirmation phrase does not match',
@@ -46,11 +63,12 @@ export class TestSettingsService {
       });
     }
     const freq = frequency && frequency !== TestFrequency.off ? frequency : TestFrequency.medium;
+    const tz = validTimeZone(timezone);
     await this.prisma.$transaction([
       this.prisma.userTestOptin.upsert({
         where: { userId },
-        create: { userId, enabled: true, frequency: freq },
-        update: { enabled: true, frequency: freq },
+        create: { userId, enabled: true, frequency: freq, timezone: tz },
+        update: { enabled: true, frequency: freq, ...(tz ? { timezone: tz } : {}) },
       }),
       this.prisma.consent.create({
         data: { userId, type: 'test_flow', textVersion: CONFIRMATION_TEXT_VERSION, locale, confirmationText },
@@ -63,13 +81,20 @@ export class TestSettingsService {
   async setFrequency(userId: string, frequency: TestFrequency) {
     if (frequency === TestFrequency.off) throw new BadRequestException('Use pause or unsubscribe instead');
     await this.requireOptin(userId);
-    await this.prisma.userTestOptin.update({ where: { userId }, data: { frequency } });
+    // The pending test was timed for the old frequency — the scheduler plans a new one.
+    await this.prisma.$transaction([
+      this.prisma.userTestOptin.update({ where: { userId }, data: { frequency } }),
+      this.cancelPending(userId),
+    ]);
     return this.status(userId);
   }
 
   async pause(userId: string) {
     await this.requireOptin(userId);
-    await this.prisma.userTestOptin.update({ where: { userId }, data: { enabled: false } });
+    await this.prisma.$transaction([
+      this.prisma.userTestOptin.update({ where: { userId }, data: { enabled: false } }),
+      this.cancelPending(userId),
+    ]);
     return { enabled: false, paused: true };
   }
 
@@ -103,7 +128,16 @@ export class TestSettingsService {
         where: { userId, type: 'test_flow', revokedAt: null },
         data: { revokedAt: new Date() },
       }),
+      this.cancelPending(userId),
     ]);
     return { enabled: false, unsubscribed: true };
+  }
+
+  /** Tests planned but not sent yet are dropped right away (R1) — the worker also re-checks before sending. */
+  private cancelPending(userId: string) {
+    return this.prisma.campaign.updateMany({
+      where: { userId, status: 'scheduled', isTest: false },
+      data: { status: 'cancelled' },
+    });
   }
 }

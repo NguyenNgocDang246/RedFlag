@@ -26,6 +26,7 @@ import {
 } from './dto/taxonomy.dto';
 import { QuizAdminService } from './quiz-admin.service';
 import { TaxonomyService } from './taxonomy.service';
+import { TestEmailAdminService } from './test-email-admin.service';
 import type { RuleOpts } from './quiz-rules';
 import { UiLocale } from './ui-locale.decorator';
 
@@ -43,8 +44,32 @@ export class AdminController {
     private readonly taxonomy: TaxonomyService,
     private readonly quiz: QuizAdminService,
     private readonly brands: BrandAdminService,
+    private readonly testEmails: TestEmailAdminService,
     private readonly audit: AuditService,
   ) {}
+
+  // ─── Test emails (Phase 4) ───
+
+  @Get('test-emails')
+  listTestEmails(@UiLocale() ui: 'en' | 'vi') {
+    return this.testEmails.list(ui);
+  }
+
+  /** Renders a test email exactly as it would arrive, without sending anything. */
+  @Get('test-emails/:variantId/preview')
+  previewTestEmail(@Param('variantId') variantId: string, @UiLocale() ui: 'en' | 'vi') {
+    return this.testEmails.preview(variantId, ui);
+  }
+
+  /** Sends it to the signed-in admin's own address — there is no way to name another recipient. */
+  @Post('test-emails/:variantId/send-to-me')
+  sendTestEmailToSelf(
+    @CurrentUser() user: AuthedUser,
+    @Param('variantId') variantId: string,
+    @UiLocale() ui: 'en' | 'vi',
+  ) {
+    return this.testEmails.sendToSelf(variantId, user.id, ui);
+  }
 
   // ─── Category ───
 

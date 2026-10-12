@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -15,9 +16,22 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
-import { ChangePasswordDto, LoginDto, RegisterDto, UpdateProfileDto, VerifyEmailDto } from '../dto/auth.dto';
+import { AuthThrottlerGuard } from '../../throttle/auth-throttler.guard';
+import { MAIL_THROTTLER } from '../../throttle/throttle.module';
+import {
+  ChangePasswordDto,
+  ForgotPasswordDto,
+  LoginDto,
+  RegisterDto,
+  ResendVerificationDto,
+  ResetPasswordDto,
+  UpdateProfileDto,
+  VerifyEmailDto,
+} from '../dto/auth.dto';
 import { AuthService } from './auth.service';
+import { GoogleService, OAUTH_STATE_COOKIE } from './google.service';
 import { CurrentUser } from './current-user.decorator';
 import {
   ACCESS_COOKIE,
@@ -30,6 +44,7 @@ import {
 import { SessionService, type IssuedRefresh } from './session.service';
 
 const REFRESH_PATH = '/api/auth'; // refresh cookie is only sent to auth routes
+const OAUTH_STATE_TTL_MS = 10 * 60 * 1000; // long enough to pick an account, short enough to be useless later
 
 /** Only accepts internal web paths (prevents open redirects). */
 function safeNext(next: string | undefined): string {
@@ -49,6 +64,7 @@ export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly sessions: SessionService,
+    private readonly google: GoogleService,
   ) {}
 
   /** `refresh: null` (rotation grace) → only a new access token; the refresh cookie stays as is. */
@@ -74,18 +90,60 @@ export class AuthController {
   }
 
   @Post('register')
+  @UseGuards(AuthThrottlerGuard)
   register(@Body() dto: RegisterDto) {
     return this.auth.register(dto.email, dto.password, dto.locale);
   }
 
   @Post('verify')
   @HttpCode(200)
+  @UseGuards(AuthThrottlerGuard)
+  @SkipThrottle({ [MAIL_THROTTLER]: true })
   verify(@Body() dto: VerifyEmailDto) {
     return this.auth.verifyEmail(dto.token);
   }
 
+  /**
+   * Asks for a reset link. Always 200, whether or not the address has an account — the answer must
+   * not tell a stranger who is registered here. Limited per mailbox, so nobody's inbox gets flooded.
+   */
+  @Post('forgot-password')
+  @HttpCode(200)
+  @UseGuards(AuthThrottlerGuard)
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.auth.requestPasswordReset(dto.email, dto.locale);
+  }
+
+  /** Sets a new password from a mailed link, then signs every device out. */
+  @Post('reset-password')
+  @HttpCode(200)
+  @UseGuards(AuthThrottlerGuard)
+  @SkipThrottle({ [MAIL_THROTTLER]: true })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    const userId = await this.auth.resetPassword(dto.token, dto.password);
+    // A reset may follow a break-in, so nothing stays signed in — not even this browser.
+    await this.sessions.revokeAllForUser(userId);
+    return { ok: true };
+  }
+
+  /** A fresh confirmation link for an address that never confirmed. Always 200, as above. */
+  @Post('resend-verification')
+  @HttpCode(200)
+  @UseGuards(AuthThrottlerGuard)
+  resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.auth.resendVerification(dto.email, dto.locale);
+  }
+
+  /** Which sign-in methods this deployment has — the web hides the Google button without it. */
+  @Get('providers')
+  providers() {
+    return { google: this.google.configured };
+  }
+
   @Post('login')
   @HttpCode(200)
+  @UseGuards(AuthThrottlerGuard)
+  @SkipThrottle({ [MAIL_THROTTLER]: true })
   async login(
     @Body() dto: LoginDto,
     @Headers('user-agent') userAgent: string | undefined,
@@ -140,6 +198,61 @@ export class AuthController {
     return { ok: true };
   }
 
+  /**
+   * Google sign-in, step 1: park the state in a short-lived cookie and send the browser to Google.
+   * The cookie is path-scoped to /api/auth, like the refresh cookie, so it only comes back here.
+   */
+  @Get('google')
+  async googleStart(
+    @Res() res: Response,
+    @Query('locale') locale?: string,
+    @Query('next') next?: string,
+  ) {
+    if (!this.google.configured) throw new NotFoundException('Google sign-in is not configured');
+    const { url, stateToken } = await this.google.start(locale, next);
+    res.cookie(OAUTH_STATE_COOKIE, stateToken, {
+      ...baseCookie(),
+      path: REFRESH_PATH,
+      maxAge: OAUTH_STATE_TTL_MS,
+    });
+    res.redirect(302, url);
+  }
+
+  /**
+   * Step 2: Google sends the browser back here. On success the session cookies are set and the
+   * browser carries on into the app; every failure lands on the login page with a quiet notice,
+   * because there is no one here to read an error page.
+   */
+  @Get('google/callback')
+  async googleCallback(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Query('code') code?: string,
+    @Query('state') state?: string,
+    @Query('error') error?: string,
+  ) {
+    if (!this.google.configured) throw new NotFoundException('Google sign-in is not configured');
+    const webUrl = (process.env.WEB_PUBLIC_URL ?? 'http://localhost:4001').replace(/\/+$/, '');
+    const stateToken = req.cookies?.[OAUTH_STATE_COOKIE] as string | undefined;
+    res.clearCookie(OAUTH_STATE_COOKIE, { ...baseCookie(), path: REFRESH_PATH });
+
+    try {
+      if (error || !code || !state) throw new BadRequestException('Google sign-in was cancelled');
+      const result = await this.google.finish(code, state, stateToken);
+      if (!result.emailVerified) {
+        // Google did not vouch for the address, so our own confirmation mail decides (R1).
+        res.redirect(302, `${webUrl}/login?unverified=1&locale=${result.locale}`);
+        return;
+      }
+      const refresh = await this.sessions.create(result.userId, req.headers['user-agent']);
+      this.setAuthCookies(res, result.userId, refresh);
+      const next = safeNext(result.next);
+      res.redirect(302, `${webUrl}${next === '/' ? `/practice?locale=${result.locale}` : next}`);
+    } catch {
+      res.redirect(302, `${webUrl}/login?error=google`);
+    }
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   me(@CurrentUser() user: AuthedUser) {
@@ -153,7 +266,10 @@ export class AuthController {
     return this.auth.updateProfile(user.id, dto);
   }
 
-  /** New password → every other device is signed out; this one stays signed in. */
+  /**
+   * New password → every other device is signed out; this one stays signed in.
+   * With no password on the account yet (Google sign-in), this sets the first one.
+   */
   @Post('password')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)

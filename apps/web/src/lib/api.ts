@@ -195,6 +195,9 @@ export interface Me {
   servicesUsed: string[];
   locale: Locale;
   emailVerified: boolean;
+  /** false for an account that only signs in with Google — it has no password to change yet. */
+  hasPassword: boolean;
+  google: boolean;
   role: 'user' | 'admin';
   training: { interests: string[] };
   test: { enabled: boolean; frequency: string };
@@ -232,6 +235,18 @@ export const register = (email: string, password: string, locale: Locale) =>
   postJson<{ ok: true }>('/auth/register', { email, password, locale });
 export const verifyEmail = (token: string) => postJson<{ ok: true }>('/auth/verify', { token });
 export const logout = () => postJson<{ ok: true }>('/auth/logout', {});
+
+/** All three answer `ok` whatever the address is — the API never says who has an account. */
+export const requestPasswordReset = (email: string, locale: Locale) =>
+  postJson<{ ok: true }>('/auth/forgot-password', { email, locale });
+export const resetPassword = (token: string, password: string) =>
+  postJson<{ ok: true }>('/auth/reset-password', { token, password });
+export const resendVerification = (email: string, locale: Locale) =>
+  postJson<{ ok: true }>('/auth/resend-verification', { email, locale });
+
+/** Full-page navigation (not fetch): Google redirects the browser back to the API. */
+export const googleSignInUrl = (locale: Locale, next?: string) =>
+  `${API_URL}/api/auth/google?${new URLSearchParams({ locale, ...(next ? { next } : {}) })}`;
 
 // ─── Contest (Phase 3A) ───
 
@@ -334,9 +349,37 @@ export interface TestStatus {
 
 export interface TestWarning {
   locale: Locale;
+  /** Several paragraphs, separated by blank lines. */
   warning: string;
   confirmPhrase: string;
+  /** Where the report button lives, and the inbox that accepts forwarded exercises. */
+  reportPageUrl: string;
+  reportAddress: string;
 }
+
+/** A test email the user received, as they saw it. No tracking tokens (R5). */
+export interface ReportableCampaign {
+  id: string;
+  sentAt: string;
+  senderName: string;
+  subject: string;
+  reported: boolean;
+  /** Whether they already said which sign gave it away. */
+  signalPicked: boolean;
+  clicked: boolean;
+}
+
+export const fetchMyTestEmails = (locale: Locale) =>
+  call<ReportableCampaign[]>(`/report/campaigns?locale=${locale}`);
+
+export const reportTestEmail = (id: string, locale: Locale) =>
+  call<{ ok: true; signals: SignalOption[] }>(
+    `/report/campaigns/${encodeURIComponent(id)}?locale=${locale}`,
+    json('POST'),
+  );
+
+export const reportTestEmailSignal = (id: string, signalCode: string) =>
+  call<{ ok: true }>(`/report/campaigns/${encodeURIComponent(id)}/signal`, json('POST', { signalCode }));
 
 export interface DeviceSession {
   id: string;
@@ -366,9 +409,12 @@ export const updateProfile = (body: {
   occupation?: string;
   servicesUsed?: string[];
   locale?: Locale;
+  /** Category codes; the API drops any it doesn't know. */
+  interests?: string[];
 }) => call<Me>('/auth/me', json('PATCH', body));
 
-export const changePassword = (currentPassword: string, newPassword: string) =>
+/** No current password on an account that only signs in with Google: this sets the first one. */
+export const changePassword = (currentPassword: string | undefined, newPassword: string) =>
   call<{ ok: true }>('/auth/password', json('POST', { currentPassword, newPassword }));
 
 export const fetchSessions = () => call<DeviceSession[]>('/auth/sessions');
@@ -376,11 +422,31 @@ export const revokeSession = (id: string) => call<{ ok: true }>(`/auth/sessions/
 export const revokeOtherSessions = () => call<{ ok: true }>('/auth/sessions/revoke-others', json('POST'));
 
 export const fetchTestWarning = (locale: Locale) => call<TestWarning>(`/onboarding/test-warning?locale=${locale}`);
+/** Sends the browser's time zone so tests arrive during the user's local daytime. */
 export const enableTest = (frequency: TestFrequencyLevel, confirmationText: string, locale: Locale) =>
-  call<{ enabled: true }>('/test/enable', json('POST', { frequency, confirmationText, locale }));
+  call<{ enabled: true }>(
+    '/test/enable',
+    json('POST', {
+      frequency,
+      confirmationText,
+      locale,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    }),
+  );
 export const setTestFrequency = (frequency: TestFrequencyLevel) =>
   call<TestStatus>('/test/frequency', json('PATCH', { frequency }));
 export const pauseTest = () => call<unknown>('/test/pause', json('POST'));
 export const resumeTest = () => call<unknown>('/test/resume', json('POST'));
 export const unsubscribeTest = () => call<unknown>('/test/unsubscribe', json('POST'));
 export const fetchTestStatus = () => call<TestStatus>('/test');
+
+// ─── Email test: the teach page after a click (Phase 4) ───
+
+/** What a clicked test email contained. Carries nothing about the recipient (R2/R5). */
+export interface CaughtContent {
+  subject: string;
+  senderName: string;
+  body: string;
+  category: { code: string; name: string } | null;
+  signals: SignalInfo[];
+}

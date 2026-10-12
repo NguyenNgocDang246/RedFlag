@@ -1,16 +1,20 @@
 'use client';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Check,
+  CircleCheck,
   KeyRound,
   LoaderCircle,
   LogOut,
   Monitor,
   ShieldCheck,
   Smartphone,
+  TriangleAlert,
 } from 'lucide-react';
 import { PasswordField } from '@/components/auth-ui';
+import { ResendVerification } from '@/components/resend-verification';
 import {
   ApiError,
   changePassword,
@@ -19,6 +23,7 @@ import {
   revokeSession,
   type DeviceSession,
   type Locale,
+  type Me,
 } from '@/lib/api';
 import { AUTH_T, ME_T } from '@/lib/i18n';
 import s from './me.module.css';
@@ -66,10 +71,11 @@ function ago(iso: string, locale: Locale): string {
   return rtf.format(0, 'minute');
 }
 
-/** Email, password change and signed-in devices. */
-export function AccountSection({ email, locale }: { email: string; locale: Locale }) {
+/** Email and how it is confirmed, the password, and the devices that are signed in. */
+export function AccountSection({ me, locale }: { me: Me; locale: Locale }) {
   const t = ME_T[locale];
   const ta = AUTH_T[locale];
+  const router = useRouter();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [pwStatus, setPwStatus] = useState<
@@ -94,11 +100,14 @@ export function AccountSection({ email, locale }: { email: string; locale: Local
     if (next.length < 8) return setPwStatus('short');
     setPwStatus('saving');
     try {
-      await changePassword(current, next);
+      // Nothing to check against on a Google-only account — the API knows, and skips it.
+      await changePassword(me.hasPassword ? current : undefined, next);
       setPwStatus('done');
       setCurrent('');
       setNext('');
       void loadSessions();
+      // The first password turns this form into "change password" from here on.
+      if (!me.hasPassword) router.refresh();
     } catch (err) {
       setPwStatus(err instanceof ApiError && err.status === 400 ? 'wrong' : 'error');
     }
@@ -115,6 +124,9 @@ export function AccountSection({ email, locale }: { email: string; locale: Local
   };
 
   const others = sessions?.filter((x) => !x.current).length ?? 0;
+  const methods = [me.hasPassword ? t.methodPassword : null, me.google ? t.methodGoogle : null]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <section className={s.card}>
@@ -123,21 +135,47 @@ export function AccountSection({ email, locale }: { email: string; locale: Local
       </h1>
       <dl className={s.kv}>
         <dt>{t.email}</dt>
-        <dd>{email}</dd>
+        <dd>
+          {me.email}{' '}
+          <span className={`${s.badge} ${me.emailVerified ? s.badge_on : s.badge_off}`}>
+            {me.emailVerified ? (
+              <CircleCheck size={15} aria-hidden />
+            ) : (
+              <TriangleAlert size={15} aria-hidden />
+            )}
+            {me.emailVerified ? t.emailVerified : t.emailUnverified}
+          </span>
+        </dd>
+        <dt>{t.signInMethod}</dt>
+        <dd>{methods || t.methodPassword}</dd>
       </dl>
+      {!me.emailVerified && (
+        <div className={s.actions}>
+          <ResendVerification
+            email={me.email}
+            locale={locale}
+            buttonClass="btn btn-secondary btn-sm"
+            statusClass={s.ok}
+            errorClass={s.err}
+          />
+        </div>
+      )}
 
       <h2 className={s.subTitle}>
-        <KeyRound size={18} aria-hidden /> {t.changePassword}
+        <KeyRound size={18} aria-hidden /> {me.hasPassword ? t.changePassword : t.setPassword}
       </h2>
+      {!me.hasPassword && <p className={s.muted}>{t.setPasswordHint}</p>}
       <form className={s.passwordForm} onSubmit={onPassword}>
-        <PasswordField
-          label={t.currentPassword}
-          value={current}
-          onChange={setCurrent}
-          showText={ta.showPassword}
-          hideText={ta.hidePassword}
-          autoComplete="current-password"
-        />
+        {me.hasPassword && (
+          <PasswordField
+            label={t.currentPassword}
+            value={current}
+            onChange={setCurrent}
+            showText={ta.showPassword}
+            hideText={ta.hidePassword}
+            autoComplete="current-password"
+          />
+        )}
         <PasswordField
           label={t.newPassword}
           hint={ta.passwordHint}
@@ -148,15 +186,9 @@ export function AccountSection({ email, locale }: { email: string; locale: Local
           autoComplete="new-password"
         />
         <div className={s.actions}>
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={pwStatus === 'saving'}
-          >
-            {pwStatus === 'saving' && (
-              <LoaderCircle size={18} className={s.spin} aria-hidden />
-            )}
-            {t.changePassword}
+          <button type="submit" className="btn btn-primary" disabled={pwStatus === 'saving'}>
+            {pwStatus === 'saving' && <LoaderCircle size={18} className={s.spin} aria-hidden />}
+            {me.hasPassword ? t.changePassword : t.setPassword}
           </button>
           {pwStatus === 'done' && (
             <span className={s.ok} role="status">

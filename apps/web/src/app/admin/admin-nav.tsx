@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   BookMarked,
   Flag,
+  Mail,
   FolderTree,
   History,
   LayoutDashboard,
@@ -19,6 +20,7 @@ const LINKS = [
   { href: '/admin/categories', key: 'categories', icon: FolderTree },
   { href: '/admin/signals', key: 'signals', icon: Flag },
   { href: '/admin/brands', key: 'brands', icon: BookMarked },
+  { href: '/admin/test-emails', key: 'testEmails', icon: Mail },
   { href: '/admin/audit', key: 'audit', icon: History },
 ] as const;
 

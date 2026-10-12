@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { cache } from 'react';
 import type {
   Brand,
+  CaughtContent,
   ContestHistory,
   ContestResult,
   Facets,
@@ -13,6 +14,7 @@ import type {
   QuizQuestion,
   QuizSet,
   TestStatus,
+  TestWarning,
 } from './api';
 
 // Server-side (SSR) fetches — use the internal API URL to render crawlable HTML (SEO).
@@ -93,4 +95,22 @@ export function fetchProgressServer(locale: 'en' | 'vi'): Promise<Progress | nul
 /** Email test settings state. Null when signed out / API error. */
 export function fetchTestStatusServer(): Promise<TestStatus | null> {
   return getJson<TestStatus>('/test');
+}
+
+/**
+ * Content for the "you clicked it" page, looked up by the token from the email link.
+ * Unauthenticated by design: the reader is coming straight from their mail app.
+ */
+export function fetchCaughtServer(token: string, locale: 'en' | 'vi'): Promise<CaughtContent | null> {
+  return getJson<CaughtContent>(`/t/${encodeURIComponent(token)}/teach`, { locale });
+}
+
+/** The report instructions users agree to, with the real addresses filled in. Public endpoint. */
+/** Which sign-in methods the API offers. null (API down) hides the Google button. */
+export function fetchAuthProvidersServer(): Promise<{ google: boolean } | null> {
+  return getJson<{ google: boolean }>('/auth/providers');
+}
+
+export function fetchTestWarningServer(locale: 'en' | 'vi'): Promise<TestWarning | null> {
+  return getJson<TestWarning>('/onboarding/test-warning', { locale });
 }

@@ -11,6 +11,7 @@ import {
   MessagesSquare,
   MousePointerClick,
   QrCode,
+  Repeat2,
   ShieldCheck,
 } from 'lucide-react';
 import type { Locale } from '@/lib/api';
@@ -50,6 +51,10 @@ export default async function HomePage({ searchParams }: Search) {
         <div className={s.heroBg} aria-hidden />
         <div className={s.hero}>
           <div className={s.heroText}>
+            <p className={s.eyebrow}>
+              <ShieldCheck size={16} aria-hidden />
+              {t.eyebrow}
+            </p>
             <h1 className={s.headline}>
               {t.headlineA} <span className={s.highlight}>{t.headlineB}</span>
             </h1>
@@ -76,6 +81,15 @@ export default async function HomePage({ searchParams }: Search) {
               <div>
                 <p className={s.heroNoteTitle}>{t.noteTitle}</p>
                 <p className={s.heroNoteBody}>{t.noteBody}</p>
+              </div>
+            </div>
+            <div className={s.heroNote}>
+              <span className={s.heroNoteIcon}>
+                <Repeat2 size={22} aria-hidden />
+              </span>
+              <div>
+                <p className={s.heroNoteTitle}>{t.note2Title}</p>
+                <p className={s.heroNoteBody}>{t.note2Body}</p>
               </div>
             </div>
           </div>

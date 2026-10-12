@@ -7,3 +7,4 @@ export * from './scenarios';
 export * from './scenario-rules';
 export * from './admin';
 export * from './contest';
+export * from './sim-email';

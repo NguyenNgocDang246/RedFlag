@@ -1,0 +1,165 @@
+/* The one place the black-red theme is used (see .theme-caught in globals.css). */
+.wrap {
+  min-height: 100vh;
+  background:
+    radial-gradient(620px 320px at 50% -8%, rgba(239, 68, 68, 0.18), transparent 70%),
+    var(--bg);
+}
+.main {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 56px 24px 72px;
+}
+
+.head {
+  text-align: center;
+  margin-bottom: 36px;
+}
+.badge {
+  display: inline-flex;
+  width: 76px;
+  height: 76px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  border: 1px solid var(--line-strong);
+  color: var(--accent);
+}
+.title {
+  margin: 0 0 14px;
+  font-size: 38px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+/* The reassurance is the most readable thing on the page, on purpose. */
+.safe {
+  margin: 0 auto;
+  max-width: 34rem;
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--fg);
+}
+.realNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: var(--bg-tint);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 15px;
+  text-align: left;
+}
+.realNote svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.card {
+  margin-bottom: 16px;
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card);
+}
+.cardTitle {
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 700;
+}
+.muted {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* The email that was clicked */
+.meta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 16px;
+  margin: 0;
+}
+.meta dt {
+  color: var(--subtle);
+  font-size: 14px;
+}
+.meta dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* What gave it away */
+.signs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.sign {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 14px;
+  border-left: 3px solid var(--accent);
+}
+.signName {
+  font-weight: 700;
+}
+.signWhy {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.tips {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.tips li::marker {
+  color: var(--accent);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+.quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  color: var(--subtle);
+  font-size: 14px;
+  text-decoration: none;
+}
+.quiet:hover {
+  color: var(--fg);
+}
+
+@media (max-width: 640px) {
+  .main {
+    padding: 36px 16px 56px;
+  }
+  .title {
+    font-size: 30px;
+  }
+  .card {
+    padding: 18px;
+  }
+  .quiet {
+    margin-left: 0;
+  }
+}
