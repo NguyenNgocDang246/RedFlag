@@ -302,10 +302,14 @@ export class QuizAdminService {
     return { id, status };
   }
 
-  /** Quizzes with attempts can't be deleted (score history would be lost) — unpublish instead. */
+  /** Quizzes with attempts (practice or contest) can't be deleted (score history would be lost) — unpublish instead. */
   async remove(id: string, actorId: string | null, ui: Locale = CLI_RULES.ui) {
     const q = await this.mustFind(id);
-    const attempts = await this.prisma.quizAttempt.count({ where: { questionId: id } });
+    const [practiced, contested] = await Promise.all([
+      this.prisma.quizAttempt.count({ where: { questionId: id } }),
+      this.prisma.contestItem.count({ where: { questionId: id } }),
+    ]);
+    const attempts = practiced + contested;
     if (attempts > 0) {
       throw new ConflictException(
         ui === 'en'

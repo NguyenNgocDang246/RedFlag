@@ -145,118 +145,52 @@
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
 }
-/* Quiz tags: always one row, at most 3 + a "+N" chip */
+/* Quiz meta line: channel · topic · difficulty — full labels, wraps instead of truncating. */
 .tagRow {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
-  flex-wrap: nowrap;
-  gap: 8px;
-  min-width: 0;
-}
-/* Tags row + "Edit quiz" button (admin only). */
-.infoTop {
-  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 4px 21px;
   min-width: 0;
-}
-.infoTop > .tagRow {
-  flex: 1;
-}
-.editLink {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 12px;
-  border: 1px dashed var(--line-strong);
-  border-radius: 999px;
+  /* Hides the separator of an item that wrapped to the start of a new line. */
+  overflow: hidden;
   font-size: 13px;
   font-weight: 600;
   color: var(--muted);
-  text-decoration: none;
 }
-.editLink:hover {
-  border-color: var(--accent);
-  color: var(--accent-strong);
-}
-@media (max-width: 600px) {
-  .editLabel {
-    display: none;
-  }
-  .editLink {
-    width: 30px;
-    padding: 0;
-    justify-content: center;
-  }
-}
-.tagChip {
-  flex: 0 1 auto;
-  min-width: 0;
+.tagItem {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: var(--card);
-  border: 1px solid var(--line);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--muted);
   white-space: nowrap;
 }
-.tagChip svg {
+.tagItem svg {
   flex: 0 0 auto;
+  color: var(--subtle);
 }
-.tagText {
-  min-width: 0;
-  max-width: 16ch; /* caps characters per tag */
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.tagFull .tagText {
-  max-width: none;
-}
-.tagMore {
-  flex: 0 0 auto;
-  position: relative;
-  cursor: pointer;
-  color: var(--fg);
-}
-.tagMore:hover,
-.tagMore:focus-visible {
-  border-color: var(--line-strong);
-}
-.tooltip {
+/* Separator dot drawn in the middle of the gap — it takes no space of its own. */
+.tagItem + .tagItem::before {
+  content: '';
   position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  z-index: 5;
-  display: none;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 8px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--card);
-  box-shadow: var(--shadow-lg);
+  left: -13px;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 50%;
+  background: var(--line-strong);
 }
-.tagMore:hover .tooltip,
-.tagMore:focus .tooltip {
-  display: flex;
-}
-.tagHot {
-  background: #fff7ed;
-  border-color: #fed7aa;
+.tagHot,
+.tagHot svg {
   color: #c2410c;
 }
 .dots {
   display: inline-flex;
   gap: 3px;
-  margin-left: 2px;
 }
 .dot,
 .dotOn {
@@ -267,6 +201,32 @@
 }
 .dotOn {
   background: var(--muted);
+}
+/* Meta line + "Edit" icon (admin only), pinned top-right. */
+.infoTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+.infoTop > .tagRow {
+  flex: 1;
+  padding-top: 5px;
+}
+.editLink {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+}
+.editLink:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
 }
 
 /* Answer choice */

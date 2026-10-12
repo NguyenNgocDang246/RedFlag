@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { Locale, Prisma, QuizKind } from '@prisma/client';
 import { DEFAULT_LOCALE, collectCorrectSpots, collectDecoys, stripNotes } from '@redflag/shared';
 import { PrismaService } from '../prisma/prisma.service';
-import { gradeQuiz } from './grading';
+import { gradeQuiz, type GradeResult } from './grading';
 import { SET_SIZE, pickSet, type AttemptStatus } from './pick-set';
 
 const OPTION_COUNT = 6; // signal options shown (plan Phase 3)
@@ -20,7 +20,7 @@ function stableKey(seed: string): number {
   return h >>> 0;
 }
 
-interface SignalInfo {
+export interface SignalInfo {
   name: string;
   explanation: string;
 }
@@ -58,7 +58,7 @@ const MAX_LIMIT = 50;
 
 const QUIZ_KINDS = Object.values(QuizKind) as string[];
 
-const QUIZ_INCLUDE = {
+export const QUIZ_INCLUDE = {
   translations: true,
   signals: { include: { signal: true } },
   category: { include: { translations: true } },
@@ -69,7 +69,7 @@ export class TrainingService {
   constructor(private readonly prisma: PrismaService) {}
 
   // ─── Quiz ───
-  private async signalInfoMap(locale: Locale): Promise<Map<string, SignalInfo>> {
+  async signalInfoMap(locale: Locale): Promise<Map<string, SignalInfo>> {
     const signals = await this.prisma.signal.findMany({ include: { translations: true } });
     const map = new Map<string, SignalInfo>();
     for (const s of signals) {
@@ -164,7 +164,7 @@ export class TrainingService {
    * Display number for learners: 1..N by `number` among published quizzes.
    * The DB `number` stays internal (ordering, "next", admin/CLI `#54`) and never shows in the learner UI.
    */
-  private async seqMap(): Promise<Map<number, number>> {
+  async seqMap(): Promise<Map<number, number>> {
     const rows = await this.prisma.quizQuestion.findMany({
       where: { status: 'published' },
       orderBy: { number: 'asc' },
@@ -360,7 +360,7 @@ export class TrainingService {
     return this.toPublicQuestion(q, locale, info, seqs);
   }
 
-  private toPublicQuestion(
+  toPublicQuestion(
     q: {
       id: string;
       number: number;
@@ -424,13 +424,6 @@ export class TrainingService {
       selectedSignals,
     });
 
-    const withInfo = (codes: string[]) =>
-      codes.map((code) => ({
-        code,
-        name: info.get(code)?.name ?? code,
-        explanation: info.get(code)?.explanation ?? '',
-      }));
-
     if (userId) {
       await this.prisma.quizAttempt.create({
         data: {
@@ -443,6 +436,29 @@ export class TrainingService {
       });
     }
 
+    return { ...this.buildReview(q, result, locale, info), savedAttempt: Boolean(userId) };
+  }
+
+  /** Graded result + per-signal explanations (shared by training answers and the contest summary). */
+  buildReview(
+    q: {
+      isScam: boolean;
+      translations: { locale: Locale; scenarioData: unknown; explanation: string }[];
+      signals: { signal: { code: string } }[];
+    },
+    result: GradeResult,
+    locale: Locale,
+    info: Map<string, SignalInfo>,
+  ) {
+    const correctCodes = q.signals.map((s) => s.signal.code);
+    const t = pick(q.translations, locale);
+    const scenarioData = t?.scenarioData ?? null;
+    const withInfo = (codes: string[]) =>
+      codes.map((code) => ({
+        code,
+        name: info.get(code)?.name ?? code,
+        explanation: info.get(code)?.explanation ?? '',
+      }));
     return {
       correctAnswerIsScam: q.isScam,
       classifyCorrect: result.classifyCorrect,
@@ -450,11 +466,10 @@ export class TrainingService {
       missedSignals: withInfo(result.missedSignals),
       wrongSignals: withInfo(result.wrongSignals),
       // Per-quiz "why this is normal" for every decoy — the client shows the ones the user picked.
-      decoySpots: collectDecoys(pick(q.translations, locale)?.scenarioData ?? null, correctCodes),
+      decoySpots: collectDecoys(scenarioData, correctCodes),
       // Per-quiz "why this is a red flag" for every correct hotspot — shown under spotted / missed.
-      correctSpots: collectCorrectSpots(pick(q.translations, locale)?.scenarioData ?? null, correctCodes),
-      explanation: pick(q.translations, locale)?.explanation ?? '',
-      savedAttempt: Boolean(userId),
+      correctSpots: collectCorrectSpots(scenarioData, correctCodes),
+      explanation: t?.explanation ?? '',
     };
   }
 }

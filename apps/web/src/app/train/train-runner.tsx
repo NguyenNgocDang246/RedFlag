@@ -10,7 +10,6 @@ import {
   CircleX,
   Library,
   LoaderCircle,
-  Pencil,
   RotateCcw,
   Sparkles,
   Trophy,
@@ -19,7 +18,7 @@ import { fetchQuizSet, type Locale, type QuizFilter, type QuizQuestion } from '@
 import { TRAIN_T } from '@/lib/i18n';
 import { KindIcon } from './kind-icon';
 import { QuizInteractive } from './quiz-interactive';
-import { QuizTags } from './quiz-tags';
+import { QuizInfo } from './player-frame';
 import s from './train.module.css';
 
 type Outcome = 'ok' | 'bad' | undefined;
@@ -258,32 +257,6 @@ export function TrainRunner({
         )}
       </nav>
     </div>
-  );
-}
-
-/** Left column: tags (channel, topic, difficulty, public) + prompt. Never reveals correct signals. */
-function QuizInfo({ q, locale, isAdmin }: { q: QuizQuestion; locale: Locale; isAdmin: boolean }) {
-  const t = TRAIN_T[locale];
-  return (
-    <>
-      <div className={s.infoTop}>
-        <QuizTags q={q} locale={locale} />
-        {/* Admin: open this quiz's editor in a new tab — practice progress is kept. */}
-        {isAdmin && (
-          <Link
-            href={`/admin/quiz/${q.id}`}
-            target="_blank"
-            className={s.editLink}
-            title={`${t.editQuiz} #${q.number}`}
-            aria-label={`${t.editQuiz} #${q.number}`}
-          >
-            <Pencil size={14} aria-hidden />
-            <span className={s.editLabel}>{t.editQuiz}</span>
-          </Link>
-        )}
-      </div>
-      <h2 className={s.prompt}>{q.prompt}</h2>
-    </>
   );
 }
 

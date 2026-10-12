@@ -69,6 +69,19 @@ enum UserRole {
   admin // content editor (Phase 3B) — granted via ADMIN_EMAILS env
 }
 
+// Contest (Phase 3A): server-authoritative graded round.
+enum ContestStatus {
+  active
+  finished
+}
+
+// How a contest item was closed. Anything but `answered` scores 0.
+enum ContestOutcome {
+  answered
+  forfeited // served again before answering (reload / back / reopened link)
+  timeout // answered after the deadline, or never answered in time
+}
+
 // Drafts are admin-only; only `published` quizzes appear on /practice and /train.
 enum ContentStatus {
   draft
@@ -112,6 +125,7 @@ model User {
   events        Event[]
   score         UserScore?
   quizAttempts  QuizAttempt[]
+  contests      ContestSession[]
   auditLogs     AuditLog[]
 }
 
@@ -324,6 +338,7 @@ model QuizQuestion {
   translations QuizQuestionTranslation[]
   signals      QuizQuestionSignal[] // CORRECT signals the user should spot
   attempts     QuizAttempt[]
+  contestItems ContestItem[]
 
   @@index([categoryId])
 }
@@ -399,6 +414,50 @@ model QuizAttempt {
   question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([questionId])
+}
+
+// A contest round (Phase 3A). The server draws the questions, serves them one at a time
+// and grades them; the client never sees answers until the round is finished. Contains NO PII.
+model ContestSession {
+  id           String        @id @default(cuid())
+  userId       String
+  locale       Locale
+  status       ContestStatus @default(active)
+  itemSeconds  Int // time limit per question
+  currentIndex Int           @default(0) // position of the question being worked on
+  score        Int           @default(0)
+  maxScore     Int           @default(0)
+  startedAt    DateTime      @default(now())
+  finishedAt   DateTime?
+
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items ContestItem[]
+
+  @@index([userId, status])
+}
+
+// One question in a contest round. Locked once `outcome` is set.
+model ContestItem {
+  id              String          @id @default(cuid())
+  sessionId       String
+  position        Int
+  questionId      String
+  servedAt        DateTime? // first (and only) time the question was shown
+  answeredAt      DateTime?
+  outcome         ContestOutcome?
+  answeredScam    Boolean?
+  selectedSignals String[]        @default([])
+  // Hotspot keys picked ("SIGNAL|text", "|text" = plain text) — our own content, for the review screen.
+  selectedSpots   String[]        @default([])
+  classifyCorrect Boolean?
+  points          Int             @default(0)
+  maxPoints       Int
+
+  session  ContestSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question QuizQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, position])
   @@index([questionId])
 }
 

@@ -7,6 +7,7 @@ import { CatalogModule } from './catalog/catalog.module';
 import { IdentityModule } from './identity/identity.module';
 import { TrainingModule } from './training/training.module';
 import { AdminModule } from './admin/admin.module';
+import { ContestModule } from './contest/contest.module';
 
 /**
  * AppModule — root of the modular monolith (see plan/architecture.md §4).
@@ -20,6 +21,7 @@ import { AdminModule } from './admin/admin.module';
     CatalogModule,
     IdentityModule,
     TrainingModule,
+    ContestModule,
     AdminModule,
   ],
 })

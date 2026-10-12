@@ -8,6 +8,7 @@ import {
   Lock,
   Shuffle,
   Sparkles,
+  Swords,
   Tags,
   Target,
   type LucideIcon,
@@ -140,6 +141,20 @@ export default async function PracticePage({ searchParams }: Search) {
             </span>
             <span className={`btn btn-secondary ${s.randomCta}`}>
               {t.libraryCta}
+              <ArrowRight size={18} aria-hidden />
+            </span>
+          </Link>
+
+          <Link href={`/contest?locale=${locale}`} className={s.library}>
+            <span className={s.libraryIcon}>
+              <Swords size={22} aria-hidden />
+            </span>
+            <span className={s.randomText}>
+              <span className={s.libraryTitle}>{t.contestTitle}</span>
+              <span className={s.randomBody}>{t.contestBody}</span>
+            </span>
+            <span className={`btn btn-secondary ${s.randomCta}`}>
+              {t.contestCta}
               <ArrowRight size={18} aria-hidden />
             </span>
           </Link>

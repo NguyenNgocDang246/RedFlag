@@ -6,7 +6,7 @@ import { AdminGate } from './admin-gate';
 import { AdminNav } from './admin-nav';
 import s from './admin.module.css';
 
-export const metadata: Metadata = { title: 'Admin — RedFlag', robots: { index: false } };
+export const metadata: Metadata = { title: 'Admin - RedFlag', robots: { index: false } };
 
 /**
  * Content admin area (Phase 3B). The server checks permissions before rendering;

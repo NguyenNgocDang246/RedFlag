@@ -11,9 +11,9 @@ import {
   fetchQuizByIdServer,
   fetchQuizServer,
 } from '@/lib/server-api';
-import { HandbookButton } from '../handbook/handbook-drawer';
 import { CategoryIcon } from './category-icon';
 import { KindIcon } from './kind-icon';
+import { PlayerBar } from './player-frame';
 import { TrainRunner, type RunnerMode } from './train-runner';
 import s from './train.module.css';
 
@@ -39,7 +39,7 @@ type Search = {
 export async function generateMetadata({ searchParams }: Search): Promise<Metadata> {
   const { locale } = await searchParams;
   const t = TRAIN_T[locale === 'vi' ? 'vi' : 'en'];
-  return { title: `${t.title} — RedFlag`, description: t.subtitle };
+  return { title: `${t.title} - RedFlag`, description: t.subtitle };
 }
 
 /**
@@ -86,7 +86,7 @@ export default async function TrainPage({ searchParams }: Search) {
       {/* Visually hidden heading — for screen readers / SEO only. */}
       <h1 className={s.srOnly}>{questions.length === 1 && id ? (questions[0].title ?? t.title) : t.title}</h1>
 
-      <div className={s.setBar}>
+      <PlayerBar locale={locale}>
         <Link href={backHref} className={s.setBack}>
           <ChevronLeft size={18} aria-hidden />
           {id ? t.backToLibrary : t.changeSet}
@@ -101,10 +101,7 @@ export default async function TrainPage({ searchParams }: Search) {
         ) : (
           <SetLabel filter={filter} facets={facets} locale={locale} />
         )}
-        <span className={s.setBarEnd}>
-          <HandbookButton locale={locale} label={t.handbook} />
-        </span>
-      </div>
+      </PlayerBar>
 
       {questions.length === 0 ? (
         <p className={s.empty}>{t.noMatch}</p>

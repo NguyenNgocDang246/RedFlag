@@ -6,7 +6,7 @@ type Search = { searchParams: Promise<{ locale?: string }> };
 
 export async function generateMetadata({ searchParams }: Search): Promise<Metadata> {
   const { locale } = await searchParams;
-  return { title: `${AUTH_T[locale === 'vi' ? 'vi' : 'en'].registerTitle} — RedFlag` };
+  return { title: `${AUTH_T[locale === 'vi' ? 'vi' : 'en'].registerTitle} - RedFlag` };
 }
 
 export default async function RegisterPage({ searchParams }: Search) {

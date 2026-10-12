@@ -230,3 +230,76 @@ export const register = (email: string, password: string, locale: Locale) =>
   postJson<{ ok: true }>('/auth/register', { email, password, locale });
 export const verifyEmail = (token: string) => postJson<{ ok: true }>('/auth/verify', { token });
 export const logout = () => postJson<{ ok: true }>('/auth/logout', {});
+
+// ─── Contest (Phase 3A) ───
+
+/** The open contest question. `skipped` = the previous one was forfeited (reload/leave) or timed out. */
+export type ContestCurrent =
+  | { finished: true; skipped?: 'forfeit' | 'timeout' }
+  | {
+      finished: false;
+      skipped?: 'forfeit' | 'timeout';
+      position: number;
+      total: number;
+      itemSeconds: number;
+      /** ISO time the answer is due. */
+      deadline: string;
+      question: QuizQuestion;
+    };
+
+export interface ContestReviewItem {
+  position: number;
+  outcome: 'answered' | 'forfeited' | 'timeout';
+  points: number;
+  maxPoints: number;
+  answeredScam: boolean | null;
+  selectedSignals: string[];
+  /** Hotspot keys picked ("SIGNAL|text"). */
+  selectedSpots: string[];
+  question: QuizQuestion;
+  review: Omit<QuizResult, 'savedAttempt'>;
+}
+
+export interface ContestResult {
+  id: string;
+  startedAt: string;
+  finishedAt: string | null;
+  score: number;
+  maxScore: number;
+  total: number;
+  correct: number;
+  falseAlarms: number;
+  missedScams: number;
+  decoyPicks: number;
+  /** Weakest first. */
+  signals: { code: string; name: string; spotted: number; missed: number }[];
+  items: ContestReviewItem[];
+}
+
+export interface ContestHistory {
+  active: { id: string; startedAt: string } | null;
+  items: { id: string; startedAt: string; finishedAt: string | null; score: number; maxScore: number; total: number }[];
+}
+
+async function contestCall<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await apiFetch(`/contest${path}`, init);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new ApiError(res.status, String(data.message ?? ''));
+  return data as T;
+}
+
+export const startContest = (locale: Locale) =>
+  contestCall<{ id: string }>(`?locale=${locale}`, { method: 'POST' });
+
+/** Each call for a question already shown skips it — call once per question. */
+export const fetchContestCurrent = (id: string) =>
+  contestCall<ContestCurrent>(`/${encodeURIComponent(id)}/current`, { method: 'POST' });
+
+export const answerContest = (
+  id: string,
+  body: { position: number; answeredScam: boolean; selectedSignals: string[]; selectedSpots: string[] },
+) =>
+  contestCall<{ finished: boolean; timedOut: boolean }>(`/${encodeURIComponent(id)}/answer`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });

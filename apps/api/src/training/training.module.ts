@@ -7,5 +7,6 @@ import { TrainingService } from './training.service';
   imports: [IdentityModule], // uses OptionalJwtGuard + JwtModule
   controllers: [TrainingController],
   providers: [TrainingService],
+  exports: [TrainingService],
 })
 export class TrainingModule {}

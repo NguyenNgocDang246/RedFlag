@@ -8,6 +8,13 @@ import { fallbackScenario, shellKind } from './fallback-scenario';
 import { ScenarioShell, signalsOf, spotKey } from './shells';
 import s from './train.module.css';
 
+/** Contest mode: the answer goes to `submit` (no grading shown); the parent moves on. */
+export interface ContestSubmit {
+  submit: (answeredScam: boolean, signals: string[], spots: string[]) => Promise<void>;
+  label: string;
+  busyLabel: string;
+}
+
 /**
  * Interactive part of a quiz question (client).
  * Quizzes with `scenarioData` → simulated shell; the user taps hotspots to pick signals.
@@ -18,6 +25,7 @@ export function QuizInteractive({
   locale,
   onResult,
   header,
+  contest,
 }: {
   q: QuizQuestion;
   locale: Locale;
@@ -25,6 +33,7 @@ export function QuizInteractive({
   header?: ReactNode;
   /** Notifies the parent once graded (for progress / summary). */
   onResult?: (correct: boolean) => void;
+  contest?: ContestSubmit;
 }) {
   const t = TRAIN_T[locale];
   const [answeredScam, setAnsweredScam] = useState<boolean | null>(null);
@@ -41,6 +50,10 @@ export function QuizInteractive({
     setBusy(true);
     setError(false);
     try {
+      if (contest) {
+        await contest.submit(answeredScam === true, answeredScam ? signalsOf(selected) : [], answeredScam ? selected : []);
+        return;
+      }
       const r = await answerQuiz(q.id, locale, answeredScam === true, answeredScam ? signalsOf(selected) : []);
       setResult(r);
       onResult?.(r.classifyCorrect);
@@ -144,7 +157,7 @@ export function QuizInteractive({
           {answeredScam !== null && (
             <button type="button" className={`btn btn-primary ${s.check}`} onClick={submit} disabled={busy}>
               {busy && <LoaderCircle size={18} className={s.spin} aria-hidden />}
-              {busy ? t.checking : t.check}
+              {busy ? (contest?.busyLabel ?? t.checking) : (contest?.label ?? t.check)}
             </button>
           )}
         </>
@@ -156,7 +169,56 @@ export function QuizInteractive({
   );
 }
 
-function ResultPanel({ result, selected, locale }: { result: QuizResult; selected: string[]; locale: Locale }) {
+/** Read-only graded view of a question (contest summary): shell with picks + reveal, and the result panel. */
+export function QuizReview({
+  q,
+  locale,
+  header,
+  selected,
+  result,
+}: {
+  q: QuizQuestion;
+  locale: Locale;
+  header?: ReactNode;
+  /** Hotspot keys the user picked. */
+  selected: string[];
+  result: Omit<QuizResult, 'savedAttempt'>;
+}) {
+  const hasShell = Boolean(q.scenarioData);
+  return (
+    <div className={s.split}>
+      {header && <div className={s.info}>{header}</div>}
+      <div className={s.sim}>
+        <ScenarioShell
+          kind={shellKind(q.kind)}
+          data={hasShell ? q.scenarioData : fallbackScenario(q.kind, q.scenario)}
+          selected={selected}
+          onToggle={() => {}}
+          locked
+          locale={locale}
+          reveal={{
+            matched: result.matchedSignals.map((x) => x.code),
+            missed: result.missedSignals.map((x) => x.code),
+            wrong: result.wrongSignals.map((x) => x.code),
+          }}
+        />
+      </div>
+      <div className={s.answer}>
+        <ResultPanel result={result} selected={selected} locale={locale} />
+      </div>
+    </div>
+  );
+}
+
+function ResultPanel({
+  result,
+  selected,
+  locale,
+}: {
+  result: Omit<QuizResult, 'savedAttempt'>;
+  selected: string[];
+  locale: Locale;
+}) {
   const t = TRAIN_T[locale];
   const ok = result.classifyCorrect;
   // Wrong picks: each picked decoy explains itself (per-quiz note on why it's normal); a wrong signal

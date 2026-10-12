@@ -4,12 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
-  BookMarked,
   ChevronDown,
   Library,
   Lock,
   LogOut,
   ShieldCheck,
+  Swords,
   Target,
 } from 'lucide-react';
 import { logout, restoreSession, type Locale, type Me } from '@/lib/api';
@@ -98,11 +98,11 @@ export function SiteHeader({ initialMe }: { initialMe: Me | null }) {
             {t.library}
           </Link>
           <Link
-            href={`/handbook${q}`}
-            className={`${s.navLink} ${pathname.startsWith('/handbook') ? s.navActive : ''}`}
+            href={`/contest${q}`}
+            className={`${s.navLink} ${pathname.startsWith('/contest') ? s.navActive : ''}`}
           >
-            <BookMarked size={17} className={s.navIcon} aria-hidden />
-            {t.handbook}
+            <Swords size={17} className={s.navIcon} aria-hidden />
+            {t.contest}
           </Link>
           {me?.role === 'admin' && (
             <Link
@@ -184,6 +184,7 @@ export function SiteFooter({ me }: { me: Me | null }) {
         <nav className={s.footLinks}>
           <Link href={`/practice${q}`}>{t.practice}</Link>
           <Link href={`/library${q}`}>{t.library}</Link>
+          <Link href={`/contest${q}`}>{t.contest}</Link>
           <Link href={`/handbook${q}`}>{t.handbook}</Link>
           {!me && (
             <>

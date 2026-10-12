@@ -220,6 +220,9 @@
     transform 0.15s,
     box-shadow 0.15s;
 }
+.library + .library {
+  margin-top: 12px;
+}
 .library:hover {
   border-color: var(--line-strong);
   transform: translateY(-2px);

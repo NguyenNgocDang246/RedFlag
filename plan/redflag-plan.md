@@ -136,6 +136,12 @@ Cùng bộ vỏ mô phỏng + hotspot như Training, nhưng là **bài thi**: đ
 - **Kết quả & lịch sử:** tổng điểm, điểm theo dấu hiệu/chủ đề, xem lại từng bài kèm giải thích; lưu lịch sử các lượt thi (cần đăng nhập). Dữ liệu này là đầu vào cho Phase 5 (`weak_signals`).
 - Tuân R2: không thu thập dữ liệu cá nhân trong bài thi. Bảng xếp hạng (nếu có) chỉ hiện tên tuỳ chọn/ẩn danh, mặc định tắt (R9).
 - **DoD:** user bắt đầu lượt thi → nhận N bài random có trộn bài an toàn → trả lời lần lượt, không quay lại được; back/reload giữa chừng làm bài đang làm bị tính rớt; màn tổng kết hiện điểm + giải thích; lượt thi được lưu và không thể sửa sau khi nộp.
+- **Đã làm (2026-10-12):**
+  - Chốt: back/reload/rời trang = **rớt riêng bài đang làm** (không huỷ cả lượt); **60s/câu** (+5s trễ mạng), hết giờ = rớt; **bắt buộc đăng nhập**; chưa có bảng xếp hạng.
+  - Bảng `ContestSession` / `ContestItem`; module `apps/api/src/contest` (`POST /contest`, `POST /contest/:id/current`, `POST /contest/:id/answer`, `GET /contest/:id/result`, `GET /contest/history`). Mỗi câu chỉ được phát **một lần** — xin lại câu đã phát = rớt; câu trả lời khoá bằng update có điều kiện; client không nhận đáp án tới khi xong lượt. Bắt đầu lượt mới thì lượt dở bị đóng (câu chưa làm tính rớt).
+  - Điểm/câu: phân loại đúng +10 (cả an toàn đúng — R11); bài lừa: +2 mỗi dấu hiệu bắt đúng, −2 mỗi mồi, không âm; báo động giả / bỏ lọt = 0. Hằng số ở `packages/shared/src/contest.ts`.
+  - Web: `/contest` (luật + bắt đầu + lịch sử), `/contest/[id]` (từng câu, đồng hồ, cảnh báo rời trang), `/contest/[id]/result` (điểm, dấu hiệu cần luyện → link /train, xem lại từng câu bằng vỏ mô phỏng). Link "Thi thử" trên header/footer và /practice.
+  - **Để sau:** cấu hình Contest qua admin (số câu, tỉ lệ, thời gian), chế độ theo chủ đề, bảng xếp hạng, thưởng tốc độ.
 
 ### Phase 3B — ADMIN: quản trị nội dung & cấu hình
 Thay việc sửa `seed.ts` bằng trang quản trị — đúng R6 (thêm kiểu lừa mới = thêm data, không sửa code).

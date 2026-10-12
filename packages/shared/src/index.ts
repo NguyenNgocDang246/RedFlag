@@ -6,3 +6,4 @@ export * from './flows';
 export * from './scenarios';
 export * from './scenario-rules';
 export * from './admin';
+export * from './contest';

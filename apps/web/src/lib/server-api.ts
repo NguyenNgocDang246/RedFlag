@@ -1,6 +1,17 @@
 import { cookies } from 'next/headers';
 import { cache } from 'react';
-import type { Brand, Facets, LibraryPage, LibraryQuery, Me, QuizFilter, QuizQuestion, QuizSet } from './api';
+import type {
+  Brand,
+  ContestHistory,
+  ContestResult,
+  Facets,
+  LibraryPage,
+  LibraryQuery,
+  Me,
+  QuizFilter,
+  QuizQuestion,
+  QuizSet,
+} from './api';
 
 // Server-side (SSR) fetches — use the internal API URL to render crawlable HTML (SEO).
 const SERVER_API_URL = process.env.API_PUBLIC_URL ?? 'http://localhost:4000';
@@ -60,4 +71,14 @@ export const fetchMeServer = cache(async function fetchMeServer(): Promise<Me | 
 /** Quiz counts by channel / topic / signal / difficulty (filtered by `level` if given). Null on API error. */
 export function fetchFacetsServer(locale: 'en' | 'vi', level?: string): Promise<Facets | null> {
   return getJson<Facets>('/training/facets', { locale, level });
+}
+
+/** Contest history (signed-in only). Null when signed out / API error. */
+export function fetchContestHistoryServer(): Promise<ContestHistory | null> {
+  return getJson<ContestHistory>('/contest/history');
+}
+
+/** A finished contest round with its review. Null if missing, not finished or not yours. */
+export function fetchContestResultServer(locale: 'en' | 'vi', id: string): Promise<ContestResult | null> {
+  return getJson<ContestResult>(`/contest/${encodeURIComponent(id)}/result`, { locale });
 }
