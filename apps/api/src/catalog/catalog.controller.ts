@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { Locale } from '@prisma/client';
-import { DEFAULT_LOCALE, isSupportedLocale } from '@phishgym/shared';
+import { DEFAULT_LOCALE, isSupportedLocale } from '@redflag/shared';
 import { CatalogService } from './catalog.service';
 
 @Controller('catalog')

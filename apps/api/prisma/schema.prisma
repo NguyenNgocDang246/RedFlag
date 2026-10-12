@@ -1,7 +1,7 @@
-// PhishGym — Prisma schema
-// Tổ chức theo bounded context (xem plan/architecture.md §4, §8).
-// Ràng buộc kiến trúc: R2 (events KHÔNG chứa PII), R5 (cô lập theo user),
-// R6 (nội dung là data, đa ngôn ngữ qua bảng *_translations).
+// RedFlag — Prisma schema
+// Organized by bounded context (see plan/architecture.md §4, §8).
+// Architectural constraints: R2 (events carry NO PII), R5 (per-user isolation),
+// R6 (content is data, translated via *_translations tables).
 
 generator client {
   provider = "prisma-client-js"
@@ -22,7 +22,7 @@ enum Locale {
 enum EventType {
   opened
   clicked
-  submitted // chạm bước submit form giả — chỉ là tín hiệu, KHÔNG lưu nội dung (R2)
+  submitted // reached the fake form's submit step — signal only, input is NOT stored (R2)
   reported
   ignored
 }
@@ -61,22 +61,47 @@ enum TrackingPurpose {
   open
   click
   submit
-  report // link "Báo cáo lừa đảo" trong email — bấm = sinh event `reported` (tín hiệu tốt). R2: chỉ là tín hiệu, không đụng dữ liệu nhập.
+  report // "Report scam" link in the email — click emits a `reported` event (good signal). R2: signal only.
+}
+
+enum UserRole {
+  user
+  admin // content editor (Phase 3B) — granted via ADMIN_EMAILS env
+}
+
+// Drafts are admin-only; only `published` quizzes appear on /practice and /train.
+enum ContentStatus {
+  draft
+  published
+}
+
+// On-site simulated quiz kinds (Group 2 — no email sent).
+enum QuizKind {
+  email_inspection
+  popup // fake popup/tech support
+  oauth_consent // fake OAuth consent screen
+  sms_inspection // SMS / brandname message
+  chat_inspection // chat (borrowing money, asking for votes...)
+  web_inspection // fake website (shop/fanpage/login)
+  qr_inspection // QR code leading to a strange domain
+  file_inspection // fake attachment / "enable content"
+  app_consent // app install + excessive permissions
 }
 
 // ─────────────────────── Context: identity ───────────────────────
 
 model User {
-  id             String    @id @default(cuid())
-  email          String    @unique
-  passwordHash   String? // auth logic ở Phase 2
-  name           String? // tuỳ chọn (R9)
-  occupation     String? // tuỳ chọn — cá nhân hoá spear-phishing mô phỏng
-  servicesUsed   String[]  @default([]) // dịch vụ hay dùng (tuỳ chọn)
-  locale         Locale    @default(en)
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String?
+  name            String? // optional (R9)
+  occupation      String? // optional — personalizes simulated spear-phishing
+  servicesUsed    String[]  @default([]) // frequently used services (optional)
+  locale          Locale    @default(en)
+  role            UserRole  @default(user)
   emailVerifiedAt DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   consents      Consent[]
   trainingPrefs UserTrainingPrefs?
@@ -86,24 +111,31 @@ model User {
   campaigns     Campaign[]
   events        Event[]
   score         UserScore?
+  quizAttempts  QuizAttempt[]
+  auditLogs     AuditLog[]
 }
 
-// Phiên đăng nhập (refresh token lưu DB, revoke được).
-// Access token là JWT ngắn hạn (guard verify không cần chạm DB);
-// refresh token opaque, chỉ lưu HASH (sha256) — raw không bao giờ nằm trong DB.
+// Sign-in session (refresh token stored in the DB, revocable).
+// The access token is a short-lived JWT (verified without touching the DB);
+// the refresh token is opaque and only its HASH (sha256) is stored — never the raw value.
 model Session {
-  id         String    @id @default(cuid())
-  userId     String
-  tokenHash  String    @unique // sha256 của refresh token hiện hành (xoay vòng mỗi lần refresh)
-  userAgent  String? // để user nhận diện phiên khi quản lý
-  expiresAt  DateTime
-  revokedAt  DateTime?
-  createdAt  DateTime  @default(now())
-  lastUsedAt DateTime  @default(now())
+  id            String    @id @default(cuid())
+  userId        String
+  tokenHash     String    @unique // sha256 of the current refresh token (rotated on every refresh)
+  // Previous token + rotation time: concurrent refreshes within the grace window still succeed;
+  // reuse after it revokes the session (see SessionService.rotate).
+  prevTokenHash String?
+  rotatedAt     DateTime?
+  userAgent     String? // lets users recognize sessions when managing them
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  lastUsedAt    DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([prevTokenHash])
 }
 
 model EmailVerification {
@@ -126,28 +158,28 @@ model Consent {
   grantedAt DateTime    @default(now())
   revokedAt DateTime?
 
-  // Bằng chứng type-to-confirm khi bật Test flow (không phải PII).
-  textVersion      String? // phiên bản text cảnh báo đã hiển thị
-  locale           Locale? // locale của câu xác nhận
-  confirmationText String? // câu user đã gõ lại
+  // Type-to-confirm evidence when enabling Test flow (not PII).
+  textVersion      String? // warning text version shown
+  locale           Locale? // locale of the confirmation phrase
+  confirmationText String? // phrase the user typed
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
-// Cấu hình Training — tách bạch với Test để bật/tắt độc lập (2 flow ⟂).
+// Training settings — separate from Test so each can be toggled independently (2 flows ⟂).
 model UserTrainingPrefs {
   id        String   @id @default(cuid())
   userId    String   @unique
-  interests String[] @default([]) // danh sách category code quan tâm
+  interests String[] @default([]) // category codes of interest
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Opt-in Test flow — độc lập hoàn toàn với Training (R1).
+// Test flow opt-in — fully independent of Training (R1).
 model UserTestOptin {
   id        String        @id @default(cuid())
   userId    String        @unique
@@ -160,18 +192,18 @@ model UserTestOptin {
 }
 
 // ─────────────────────── Context: catalog ───────────────────────
-// Nội dung là DATA (R6). Thêm kiểu lừa = thêm rows, không sửa code.
-// Field hiển thị nằm ở bảng *_translations (đa ngôn ngữ, mặc định en).
+// Content is DATA (R6). New scam types = new rows, no code changes.
+// Display fields live in *_translations tables (multilingual, en by default).
 
 model Signal {
   id        String   @id @default(cuid())
-  code      String   @unique // khớp SignalCode trong @phishgym/shared
+  code      String   @unique // matches SignalCode in @redflag/shared
   createdAt DateTime @default(now())
 
-  translations    SignalTranslation[]
-  variantSignals  VariantSignal[]
-  lessons         Lesson[]
+  translations     SignalTranslation[]
+  variantSignals   VariantSignal[]
   reportedInEvents Event[]
+  quizSignals      QuizQuestionSignal[]
 }
 
 model SignalTranslation {
@@ -188,12 +220,15 @@ model SignalTranslation {
 
 model Category {
   id           String   @id @default(cuid())
-  code         String   @unique // khớp CategoryCode trong @phishgym/shared
-  impersonates String[] @default([]) // ví dụ brand mạo danh (data, đa vùng)
+  code         String   @unique // matches CategoryCode in @redflag/shared
+  impersonates String[] @default([]) // impersonated brand examples (data, multi-region)
+  order        Int      @default(0)
   createdAt    DateTime @default(now())
 
-  translations CategoryTranslation[]
-  templates    Template[]
+  translations  CategoryTranslation[]
+  templates     Template[]
+  quizQuestions QuizQuestion[]
+  brands        Brand[]
 }
 
 model CategoryTranslation {
@@ -211,7 +246,7 @@ model CategoryTranslation {
 model Template {
   id         String   @id @default(cuid())
   categoryId String
-  code       String   @unique // ví dụ BANK-001
+  code       String   @unique // e.g. BANK-001
   createdAt  DateTime @default(now())
 
   category     Category              @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -222,11 +257,11 @@ model Template {
 }
 
 model TemplateTranslation {
-  id            String @id @default(cuid())
-  templateId    String
-  locale        Locale
+  id             String @id @default(cuid())
+  templateId     String
+  locale         Locale
   subjectPattern String
-  bodyPattern   String
+  bodyPattern    String
 
   template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
@@ -236,7 +271,7 @@ model TemplateTranslation {
 model Variant {
   id              String   @id @default(cuid())
   templateId      String
-  difficultyLevel Int      @default(1) // 1 = dễ
+  difficultyLevel Int      @default(1) // 1 = easy
   createdAt       DateTime @default(now())
 
   template     Template             @relation(fields: [templateId], references: [id], onDelete: Cascade)
@@ -248,18 +283,18 @@ model Variant {
 }
 
 model VariantTranslation {
-  id             String @id @default(cuid())
-  variantId      String
-  locale         Locale
+  id              String @id @default(cuid())
+  variantId       String
+  locale          Locale
   renderedSubject String
-  renderedBody   String
+  renderedBody    String
 
   variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   @@unique([variantId, locale])
 }
 
-// Variant ↔ Signal (nhiều-nhiều): metadata để chấm theo signal (R7).
+// Variant ↔ Signal (many-to-many): metadata for signal-based grading (R7).
 model VariantSignal {
   variantId String
   signalId  String
@@ -271,29 +306,119 @@ model VariantSignal {
   @@index([signalId])
 }
 
-model Lesson {
-  id         String   @id @default(cuid())
-  signalId   String? // bài học gắn signal (có thể null)
-  categoryId String? // hoặc gắn category (có thể null)
-  createdAt  DateTime @default(now())
+// On-site simulated quiz (Training part b). NO email sent; graded on the server.
+model QuizQuestion {
+  id              String        @id @default(cuid())
+  number          Int           @unique @default(autoincrement()) // sequence number #1, #2… for the library
+  kind            QuizKind
+  isScam          Boolean // correct answer to "safe / scam"
+  difficultyLevel Int           @default(1)
+  categoryId      String?
+  isPublic        Boolean       @default(false) // guests can take it (public set)
+  order           Int           @default(0)
+  status          ContentStatus @default(published)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now()) @updatedAt
 
-  signal       Signal?             @relation(fields: [signalId], references: [id], onDelete: SetNull)
-  translations LessonTranslation[]
+  category     Category?                 @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  translations QuizQuestionTranslation[]
+  signals      QuizQuestionSignal[] // CORRECT signals the user should spot
+  attempts     QuizAttempt[]
 
-  @@index([signalId])
   @@index([categoryId])
 }
 
-model LessonTranslation {
-  id       String @id @default(cuid())
-  lessonId String
-  locale   Locale
-  title    String
-  content  String
+model QuizQuestionTranslation {
+  id           String  @id @default(cuid())
+  questionId   String
+  locale       Locale
+  title        String? // neutral library title — must NOT reveal the answer
+  prompt       String
+  scenario     String // flat text (SEO + fallback when there's no scenarioData)
+  scenarioData Json? // structured per-channel content + hotspots (see ScenarioData in @redflag/shared)
+  explanation  String // shown after grading
 
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  @@unique([lessonId, locale])
+  @@unique([questionId, locale])
+}
+
+// Correct signals for a quiz question (signal-based grading — R7).
+model QuizQuestionSignal {
+  questionId String
+  signalId   String
+
+  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  signal   Signal       @relation(fields: [signalId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, signalId])
+  @@index([signalId])
+}
+
+// Brand handbook: brands' REAL contact channels so learners can cross-check.
+// One brand set per locale (VI quizzes use vi brands, EN quizzes use en brands), so
+// descriptions live on the row itself, with no translation table.
+// Not tied to individual questions (a shared reference, like looking things up in real life).
+model Brand {
+  id           String        @id @default(cuid())
+  code         String // e.g. SAOMAI_BANK — unique within a locale
+  locale       Locale
+  name         String
+  description  String        @default("")
+  categoryId   String?
+  websites     String[]      @default([])
+  emailDomains String[]      @default([])
+  smsSenders   String[]      @default([]) // brandname SMS
+  hotlines     String[]      @default([])
+  apps         String[]      @default([]) // "App name — Publisher"
+  socialPages  String[]      @default([])
+  order        Int           @default(0)
+  status       ContentStatus @default(published)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now()) @updatedAt
+
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@unique([code, locale])
+  @@index([locale])
+  @@index([categoryId])
+}
+
+// Quiz attempts by signed-in users (basis for progress/scoring later).
+// Guests do NOT create attempts. Contains NO PII.
+model QuizAttempt {
+  id              String   @id @default(cuid())
+  userId          String
+  questionId      String
+  answeredScam    Boolean // user picked "scam"?
+  classifyCorrect Boolean // safe/scam classified correctly?
+  selectedSignals String[] @default([]) // signal codes the user picked
+  createdAt       DateTime @default(now())
+
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([questionId])
+}
+
+// ─────────────────────── Context: admin ───────────────────────
+
+// Content edit log (who changed what, when). Only admin actions on the catalog,
+// never other users' personal data (R5).
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String // create | update | delete | publish | unpublish
+  entity    String // category | signal | quiz | brand
+  entityId  String
+  changes   Json? // snapshot after the change (or before deletion)
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([createdAt])
 }
 
 // ─────────────────────── Context: testing ───────────────────────
@@ -331,9 +456,9 @@ model Delivery {
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 }
 
-// ─────────────── Context: tracking (biên an toàn R2) ───────────────
+// ─────────────── Context: tracking (R2 safety boundary) ───────────────
 
-// Token opaque, per-campaign, hết hạn/thu hồi được (R5). KHÔNG phải PII.
+// Opaque per-campaign token, expirable/revocable (R5). NOT PII.
 model TrackingToken {
   id         String          @id @default(cuid())
   token      String          @unique
@@ -348,13 +473,13 @@ model TrackingToken {
   @@index([campaignId])
 }
 
-// Event = TÍN HIỆU. Tuyệt đối KHÔNG có field chứa dữ liệu user nhập (R2).
+// Event = SIGNAL. Never any field holding user-entered data (R2).
 model Event {
   id               String    @id @default(cuid())
   campaignId       String
   userId           String
   type             EventType
-  reportedSignalId String? // khi user "report" + chọn dấu hiệu nghi (trắc nghiệm)
+  reportedSignalId String? // when the user reports + picks the suspicious sign (multiple choice)
   createdAt        DateTime  @default(now())
 
   campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -367,11 +492,11 @@ model Event {
 
 // ─────────────────────── Context: scoring ───────────────────────
 
-// Projection đọc nhanh cho dashboard; nguồn sự thật là bảng events.
+// Read projection for the dashboard; the events table is the source of truth.
 model UserScore {
   userId         String   @id
   awarenessScore Float    @default(0)
-  weakSignals    Json     @default("[]") // danh sách signal code yếu
+  weakSignals    Json     @default("[]") // weak signal codes
   updatedAt      DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

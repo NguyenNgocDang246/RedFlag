@@ -3,8 +3,8 @@ import { TestFrequency } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 /**
- * Quản lý Test flow sau onboarding (R1): tạm dừng, tiếp tục, huỷ hẳn.
- * Pause = giữ cấu hình nhưng ngừng xếp lịch; Unsubscribe = tắt + thu hồi consent.
+ * Test flow management after onboarding (R1): pause, resume, unsubscribe.
+ * Pause = keep config but stop scheduling; Unsubscribe = disable + revoke consent.
  */
 @Injectable()
 export class TestSettingsService {
@@ -28,7 +28,7 @@ export class TestSettingsService {
 
   async resume(userId: string) {
     const optin = await this.requireOptin(userId);
-    // Chỉ cho resume nếu consent test_flow chưa bị thu hồi.
+    // Resume only if the test_flow consent hasn't been revoked.
     const activeConsent = await this.prisma.consent.findFirst({
       where: { userId, type: 'test_flow', revokedAt: null },
     });

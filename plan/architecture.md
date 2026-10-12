@@ -1,4 +1,4 @@
-# PhishGym — Software Architecture
+# RedFlag — Software Architecture
 
 Tài liệu kiến trúc, trình bày theo các mô hình chuẩn:
 - **C4 model** — mô tả hệ thống ở 3 mức: Context → Container → Component.
@@ -6,7 +6,7 @@ Tài liệu kiến trúc, trình bày theo các mô hình chuẩn:
 - **Hexagonal / Clean Architecture** — cấu trúc nội bộ mỗi module (domain lõi ở trong, infra ở ngoài, phụ thuộc hướng vào trong).
 - **DDD (Domain-Driven Design)** — chia **bounded contexts** theo nghiệp vụ.
 
-> Mọi quyết định ở đây bám **Core Rules R1–R9** trong [phishgym-plan.md](phishgym-plan.md). Đặc biệt R2 (không đụng PII) và R6 (mở rộng bằng data) là ràng buộc kiến trúc, không chỉ là feature.
+> Mọi quyết định ở đây bám **Core Rules R1–R9** trong [redflag-plan.md](redflag-plan.md). Đặc biệt R2 (không đụng PII) và R6 (mở rộng bằng data) là ràng buộc kiến trúc, không chỉ là feature.
 
 ---
 
@@ -29,7 +29,7 @@ Tài liệu kiến trúc, trình bày theo các mô hình chuẩn:
 ```
                          ┌─────────────────────────────┐
       Guest  ───────────▶│                             │
- (chưa đăng ký)          │          PhishGym           │
+ (chưa đăng ký)          │          RedFlag           │
                          │  (sân tập nhận biết lừa đảo) │◀──── Admin/Content editor
       User   ───────────▶│                             │       (quản lý Catalog)
  (đã đăng ký, miễn phí)  └───────┬───────────┬─────────┘
@@ -54,7 +54,7 @@ Tài liệu kiến trúc, trình bày theo các mô hình chuẩn:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                              PhishGym                                   │
+│                              RedFlag                                   │
 │                                                                        │
 │  ┌────────────────┐        HTTPS        ┌──────────────────────────┐   │
 │  │  Web (Next.js) │  ◀───────────────▶  │   API (NestJS)           │   │

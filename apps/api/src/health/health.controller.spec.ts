@@ -7,7 +7,7 @@ describe('HealthController', () => {
     const result = controller.check();
 
     expect(result.status).toBe('ok');
-    expect(result.service).toBe('phishgym-api');
+    expect(result.service).toBe('redflag-api');
     expect(typeof result.uptime).toBe('number');
   });
 });

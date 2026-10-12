@@ -1,0 +1,364 @@
+.page {
+  flex: 1;
+  overflow-x: clip;
+}
+
+/* ── Hero ── */
+.heroWrap {
+  position: relative;
+}
+.heroBg {
+  position: absolute;
+  inset: -68px 0 0;
+  z-index: -1;
+  background:
+    radial-gradient(600px 380px at 85% 20%, rgba(239, 68, 68, 0.14), transparent 70%),
+    radial-gradient(520px 320px at 10% 0%, rgba(251, 113, 133, 0.1), transparent 70%);
+}
+.heroBg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(17, 16, 20, 0.07) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 85%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 85%);
+}
+.hero {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 56px;
+  /* Top-aligned: the demo frame on the right is tall; centering would push the heading down. */
+  align-items: start;
+}
+.heroText {
+  padding-top: 24px;
+}
+.headline {
+  margin: 20px 0 20px;
+  font-size: clamp(36px, 5.4vw, 60px);
+  line-height: 1.06;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+.highlight {
+  display: block;
+  white-space: nowrap;
+  background: linear-gradient(100deg, #ef4444 0%, #b91c1c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+/* Gradient text is transparent; give selected text a real color or it disappears. */
+.highlight::selection {
+  color: var(--accent-strong);
+  -webkit-text-fill-color: var(--accent-strong);
+}
+.sub {
+  margin: 0 0 32px;
+  max-width: 540px;
+  font-size: 19px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+/* Short "why it works" note under the CTAs — fills the hero's left column. */
+.heroNote {
+  display: flex;
+  gap: 16px;
+  max-width: 540px;
+  margin-top: 40px;
+  padding: 20px 22px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(160deg, #fff1f1, #fff8f8);
+  border: 1px solid #fde0e0;
+}
+.heroNoteIcon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  color: var(--accent);
+  box-shadow: var(--shadow);
+}
+.heroNoteTitle {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+}
+.heroNoteBody {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* ── Demo ── */
+.demo {
+  position: relative;
+  padding: 22px 22px 18px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(8px);
+}
+.demoTitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.demoTitle svg {
+  color: var(--accent);
+}
+.demoStatus {
+  min-height: 60px;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--muted);
+}
+.progress {
+  width: 160px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.progressBar {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+.demoDone {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--success-soft);
+  color: var(--success);
+  font-weight: 600;
+  text-align: left;
+}
+.demoMore {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* ── Channels ── */
+.channels {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 8px 24px 56px;
+  text-align: center;
+}
+.channelsTitle {
+  margin: 0 0 18px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+.chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  font-size: 15px;
+  font-weight: 600;
+}
+.chip svg {
+  color: var(--accent);
+}
+
+/* ── Section chung ── */
+.section {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 64px 24px;
+}
+.sectionHead {
+  margin-bottom: 36px;
+  text-align: center;
+}
+.kicker {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.h2 {
+  margin: 10px 0 0;
+  font-size: clamp(28px, 3.6vw, 40px);
+  font-weight: 800;
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.step {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.step:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+.stepTop {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.stepTop h3 {
+  margin: 0;
+}
+.stepIcon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.step h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+}
+.step p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+/* ── Final CTA ── */
+.final {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 24px 24px 0;
+}
+.finalCard {
+  position: relative;
+  overflow: hidden;
+  padding: 64px 32px;
+  border-radius: 28px;
+  text-align: center;
+  color: #fff;
+  background:
+    radial-gradient(500px 240px at 80% 0%, rgba(255, 255, 255, 0.18), transparent 70%),
+    linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  box-shadow: 0 24px 60px rgba(220, 38, 38, 0.3);
+}
+.finalCard h2 {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 3.6vw, 40px);
+  font-weight: 800;
+}
+.finalCard p {
+  margin: 0 0 28px;
+  font-size: 18px;
+  opacity: 0.9;
+}
+.finalBtn {
+  background: #fff;
+  color: var(--accent-strong);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+.finalBtn:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 920px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding: 40px 20px 48px;
+  }
+  .heroText {
+    padding-top: 0;
+  }
+  /* Single column: let the text and note span the full width instead of leaving a gap. */
+  .sub,
+  .heroNote {
+    max-width: none;
+  }
+  .steps {
+    grid-template-columns: 1fr;
+  }
+  .section {
+    padding: 48px 20px;
+  }
+}
+@media (max-width: 520px) {
+  /* The highlighted line never wraps, so scale it with the viewport to fit. */
+  .headline {
+    font-size: min(36px, 8.6vw);
+  }
+  .ctaRow .btn {
+    width: 100%;
+  }
+  .demo {
+    padding: 16px 10px 14px;
+    border-radius: 22px;
+  }
+  .finalCard {
+    padding: 48px 20px;
+  }
+}

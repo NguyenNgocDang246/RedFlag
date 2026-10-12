@@ -6,8 +6,7 @@ import { loadEnv } from './load-env';
 import { AppModule } from './app.module';
 
 /**
- * API entrypoint (HTTP). Worker chạy bằng entrypoint riêng (worker.ts)
- * nhưng dùng chung codebase — đặc trưng modular monolith.
+ * API entrypoint (HTTP). The worker has its own entrypoint (worker.ts) on the same codebase.
  */
 async function bootstrap() {
   loadEnv();
@@ -20,13 +19,13 @@ async function bootstrap() {
     new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }),
   );
 
-  const webUrl = process.env.WEB_PUBLIC_URL ?? 'http://localhost:3000';
+  const webUrl = process.env.WEB_PUBLIC_URL ?? 'http://localhost:4001';
   app.enableCors({ origin: webUrl, credentials: true });
 
   const port = Number(process.env.API_PORT ?? 4000);
   await app.listen(port);
 
-  Logger.log(`PhishGym API listening on http://localhost:${port}/api`, 'Bootstrap');
+  Logger.log(`RedFlag API listening on http://localhost:${port}/api`, 'Bootstrap');
 }
 
 void bootstrap();

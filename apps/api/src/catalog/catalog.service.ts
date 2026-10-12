@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Locale } from '@prisma/client';
-import { DEFAULT_LOCALE } from '@phishgym/shared';
+import { DEFAULT_LOCALE } from '@redflag/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -8,8 +8,7 @@ export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Lấy danh sách variant kèm signal, nội dung theo locale (fallback về en).
-   * Phục vụ DoD Phase 1 và là nền cho render bài test/quiz ở phase sau.
+   * Variants with their signals and locale content (falls back to en).
    */
   async listVariants(locale: Locale = DEFAULT_LOCALE) {
     const variants = await this.prisma.variant.findMany({

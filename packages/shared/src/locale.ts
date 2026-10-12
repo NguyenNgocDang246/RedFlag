@@ -1,6 +1,6 @@
 /**
- * Locale — ngôn ngữ nội dung. Mặc định EN (phạm vi global), VI là bổ sung.
- * Nội dung đa ngôn ngữ nằm ở tầng data (R6); đây là tập locale được hỗ trợ.
+ * Content language. EN is the default (global scope), VI is additional.
+ * Translated content lives in the data layer (R6); this is the supported set.
  */
 export const Locale = {
   EN: 'en',

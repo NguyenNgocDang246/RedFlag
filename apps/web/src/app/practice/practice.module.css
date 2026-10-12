@@ -1,0 +1,323 @@
+.main {
+  max-width: 1080px;
+  padding: 40px 24px 0;
+}
+.head {
+  margin-bottom: 28px;
+}
+.empty {
+  color: var(--muted);
+}
+
+/* ── Random practice ── */
+.random {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 28px;
+  border-radius: 24px;
+  border: 1px solid #fde0e0;
+  background:
+    radial-gradient(400px 200px at 90% 0%, rgba(239, 68, 68, 0.12), transparent 70%),
+    linear-gradient(160deg, #fff1f1, #fff8f8);
+  color: var(--fg);
+  text-decoration: none;
+  box-shadow: var(--shadow);
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.random:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+.randomIcon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: #fff;
+  box-shadow: var(--shadow-accent);
+}
+.randomText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.randomTitle {
+  font-size: 22px;
+  font-weight: 800;
+}
+.randomBody {
+  font-size: 16px;
+  color: var(--muted);
+}
+.randomCta {
+  flex: 0 0 auto;
+}
+
+/* ── Groups ── */
+.section {
+  margin-top: 40px;
+}
+.sectionHead {
+  margin-bottom: 14px;
+}
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.tile {
+  height: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'icon name'
+    'icon count';
+  column-gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--fg);
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 0.15s,
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.tile:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.tileIcon {
+  grid-area: icon;
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.tileName {
+  grid-area: name;
+  font-size: 16px;
+  font-weight: 700;
+}
+.tileCount {
+  grid-area: count;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 8px 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--fg);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s;
+}
+.chip:hover {
+  border-color: var(--accent);
+}
+.chipCount {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-soft);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ── Difficulty picker ── */
+.levels {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.levelsLabel {
+  margin-right: 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.levelChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--fg);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.levelChip:hover {
+  border-color: var(--line-strong);
+}
+.levelOn {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+/* ── Library ── */
+.library {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 40px;
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--card);
+  color: var(--fg);
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 0.15s,
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.library:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.libraryIcon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-soft);
+  color: var(--fg);
+}
+.libraryTitle {
+  font-size: 19px;
+  font-weight: 800;
+}
+
+/* ── Locked quizzes (guests) ── */
+.locked {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 40px;
+  padding: 22px 24px;
+  border-radius: 20px;
+  border: 1px dashed var(--line-strong);
+  background: var(--bg-soft);
+}
+.lockedIcon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  color: var(--muted);
+  box-shadow: var(--shadow-sm);
+}
+.lockedText {
+  flex: 1;
+}
+.lockedText h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+.lockedText p {
+  margin: 0;
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .main {
+    padding: 24px 16px 0;
+  }
+  .random {
+    flex-wrap: wrap;
+    padding: 20px;
+  }
+  .randomCta {
+    width: 100%;
+  }
+  .library {
+    flex-wrap: wrap;
+    padding: 20px;
+  }
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  /* Small screens: drop decorative icons, keep the text full width. */
+  .tile {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'name'
+      'count';
+    row-gap: 2px;
+    padding: 14px;
+  }
+  .tileIcon,
+  .randomIcon,
+  .libraryIcon,
+  .lockedIcon {
+    display: none;
+  }
+  .randomTitle {
+    font-size: 20px;
+  }
+  .locked {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .locked .btn {
+    width: 100%;
+  }
+}

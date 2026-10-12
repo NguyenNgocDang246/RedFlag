@@ -5,9 +5,9 @@ import { loadEnv } from './load-env';
 import { AppModule } from './app.module';
 
 /**
- * Worker entrypoint — tiến trình nền (scheduler + queue consumers).
- * Phase 0: chỉ boot application context (chưa có queue; BullMQ thêm ở Phase 4).
- * Tách tiến trình để job nền không ảnh hưởng độ trễ API (R8).
+ * Worker entrypoint — background process (scheduler + queue consumers).
+ * Phase 0: boots the app context only (BullMQ arrives in Phase 4).
+ * Separate process so background jobs don't affect API latency (R8).
  */
 async function bootstrap() {
   loadEnv();
@@ -15,7 +15,7 @@ async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
   await app.init();
 
-  Logger.log('PhishGym worker started (idle — queues arrive in Phase 4)', 'Worker');
+  Logger.log('RedFlag worker started (idle — queues arrive in Phase 4)', 'Worker');
 
   const shutdown = async (signal: string) => {
     Logger.log(`Received ${signal}, shutting down worker`, 'Worker');

@@ -5,10 +5,11 @@ import { MailModule } from './mail/mail.module';
 import { HealthModule } from './health/health.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { IdentityModule } from './identity/identity.module';
+import { TrainingModule } from './training/training.module';
+import { AdminModule } from './admin/admin.module';
 
 /**
- * AppModule — gốc của modular monolith (xem plan/architecture.md §4).
- * Các bounded context được thêm dưới dạng module theo từng Phase.
+ * AppModule — root of the modular monolith (see plan/architecture.md §4).
  */
 @Module({
   imports: [
@@ -18,6 +19,8 @@ import { IdentityModule } from './identity/identity.module';
     HealthModule,
     CatalogModule,
     IdentityModule,
+    TrainingModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

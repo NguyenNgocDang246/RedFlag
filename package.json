@@ -1,19 +1,19 @@
 {
-  "name": "phishgym",
+  "name": "redflag",
   "version": "0.0.0",
   "private": true,
-  "description": "PhishGym — sân tập rèn phản xạ nhận biết lừa đảo online",
+  "description": "RedFlag — sân tập rèn phản xạ nhận biết lừa đảo online",
   "packageManager": "pnpm@10.20.0",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "build": "pnpm -r --filter @phishgym/shared build && pnpm -r --filter \"./apps/*\" build",
-    "build:shared": "pnpm --filter @phishgym/shared build",
+    "build": "pnpm -r --filter @redflag/shared build && pnpm -r --filter \"./apps/*\" build",
+    "build:shared": "pnpm --filter @redflag/shared build",
     "dev": "pnpm build:shared && concurrently -n api,web -c blue,magenta \"pnpm dev:api\" \"pnpm dev:web\"",
-    "dev:api": "pnpm --filter @phishgym/api start:dev",
-    "dev:web": "pnpm --filter @phishgym/web dev",
-    "dev:worker": "pnpm --filter @phishgym/api start:worker",
+    "dev:api": "pnpm build:shared && pnpm --filter @redflag/api start:dev",
+    "dev:web": "pnpm build:shared && pnpm --filter @redflag/web dev",
+    "dev:worker": "pnpm build:shared && pnpm --filter @redflag/api start:worker",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",

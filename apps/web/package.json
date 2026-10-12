@@ -1,17 +1,18 @@
 {
-  "name": "@phishgym/web",
+  "name": "@redflag/web",
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p ${WEB_PORT:-3000}",
+    "dev": "next dev -p 4001",
     "build": "next build",
-    "start": "next start -p ${WEB_PORT:-3000}",
+    "start": "next start -p 4001",
     "lint": "next lint",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "echo \"(web) no tests yet\""
   },
   "dependencies": {
-    "@phishgym/shared": "workspace:*",
+    "@redflag/shared": "workspace:*",
+    "lucide-react": "^1.52.0",
     "next": "^15.1.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

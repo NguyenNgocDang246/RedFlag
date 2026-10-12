@@ -3,7 +3,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { SessionService } from './auth/session.service';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { ACCESS_TTL_SEC, JwtAuthGuard } from './auth/jwt-auth.guard';
+import { OptionalJwtGuard } from './auth/optional-jwt.guard';
 import { OnboardingController } from './onboarding/onboarding.controller';
 import { OnboardingService } from './onboarding/onboarding.service';
 import { TestSettingsController } from './consent/test-settings.controller';
@@ -12,14 +13,29 @@ import { TestSettingsService } from './consent/test-settings.service';
 @Module({
   imports: [
     JwtModule.registerAsync({
-      // Factory chạy lúc init (sau loadEnv) nên đọc được SESSION_SECRET.
-      useFactory: () => ({
-        secret: process.env.SESSION_SECRET ?? 'dev-insecure-secret',
-        signOptions: { expiresIn: '7d' },
-      }),
+      // The factory runs at init (after loadEnv), so SESSION_SECRET is available.
+      useFactory: () => {
+        const secret = process.env.SESSION_SECRET;
+        if (process.env.NODE_ENV === 'production' && (!secret || secret === 'change-me-in-production')) {
+          throw new Error('SESSION_SECRET must be set to a long random string in production');
+        }
+        return {
+          secret: secret || 'dev-insecure-secret',
+          signOptions: { expiresIn: ACCESS_TTL_SEC },
+        };
+      },
     }),
   ],
   controllers: [AuthController, OnboardingController, TestSettingsController],
-  providers: [AuthService, SessionService, OnboardingService, TestSettingsService, JwtAuthGuard],
+  providers: [
+    AuthService,
+    SessionService,
+    OnboardingService,
+    TestSettingsService,
+    JwtAuthGuard,
+    OptionalJwtGuard,
+  ],
+  // Exported so other contexts (e.g. Training) can reuse the guard + JwtModule.
+  exports: [JwtModule, JwtAuthGuard, OptionalJwtGuard],
 })
 export class IdentityModule {}

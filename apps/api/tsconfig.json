@@ -5,6 +5,7 @@
     "moduleResolution": "Node16",
     "outDir": "./dist",
     "rootDir": "./src",
+    "preserveWatchOutput": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },

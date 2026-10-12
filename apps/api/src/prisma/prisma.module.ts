@@ -2,8 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 
 /**
- * PrismaModule — global để mọi bounded context inject PrismaService.
- * (Tầng persistence adapter dùng chung một kết nối DB — modular monolith.)
+ * PrismaModule — global so every bounded context can inject PrismaService.
  */
 @Global()
 @Module({

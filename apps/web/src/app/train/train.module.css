@@ -1,0 +1,788 @@
+.main {
+  max-width: 1240px;
+  padding: 16px 24px 0;
+  overflow-x: clip;
+}
+
+/* Current set bar: ‹ Pick another · [Bank] */
+.setBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 32px;
+  margin-bottom: 12px;
+  min-width: 0;
+}
+.setBack {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+}
+.setBack:hover {
+  color: var(--fg);
+}
+.setChips {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+.setChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.setBarEnd {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: flex;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.empty {
+  text-align: center;
+  color: var(--muted);
+}
+
+/* ── Quiz card ── */
+.main {
+  /* Fixed card height = viewport minus header, progress bar and nav buttons. */
+  /* header 68 + top padding 16 + set bar 44 + nav (with progress) ~64 + bottom space ~98 */
+  --card-h: clamp(430px, calc(100dvh - 290px), 740px);
+}
+.card {
+  height: var(--card-h);
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.card[hidden] {
+  display: none;
+}
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.prompt {
+  margin: 12px 0 0;
+  font-size: 19px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+/* ── Two columns: left = description + answer, right = simulation ── */
+.split {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    'info sim'
+    'answer sim';
+  column-gap: 32px;
+}
+.info {
+  grid-area: info;
+}
+.answer {
+  grid-area: answer;
+  /* The answer / result area scrolls internally; tags + prompt stay put. */
+  min-height: 0;
+  overflow-y: auto;
+  margin-right: -10px;
+  padding: 0 10px 4px 0;
+}
+.sim {
+  grid-area: sim;
+  /* The phone shrinks with the card height so it's always fully visible (minus tags + bezel). */
+  --phone-h: clamp(300px, calc(var(--card-h) - 140px), 600px);
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px 10px 12px 2px;
+  margin-right: -10px;
+}
+.answer,
+.sim,
+.summary {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+/* Quiz tags: always one row, at most 3 + a "+N" chip */
+.tagRow {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-width: 0;
+}
+/* Tags row + "Edit quiz" button (admin only). */
+.infoTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.infoTop > .tagRow {
+  flex: 1;
+}
+.editLink {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+}
+.editLink:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+@media (max-width: 600px) {
+  .editLabel {
+    display: none;
+  }
+  .editLink {
+    width: 30px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+.tagChip {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tagChip svg {
+  flex: 0 0 auto;
+}
+.tagText {
+  min-width: 0;
+  max-width: 16ch; /* caps characters per tag */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tagFull .tagText {
+  max-width: none;
+}
+.tagMore {
+  flex: 0 0 auto;
+  position: relative;
+  cursor: pointer;
+  color: var(--fg);
+}
+.tagMore:hover,
+.tagMore:focus-visible {
+  border-color: var(--line-strong);
+}
+.tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 5;
+  display: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: var(--shadow-lg);
+}
+.tagMore:hover .tooltip,
+.tagMore:focus .tooltip {
+  display: flex;
+}
+.tagHot {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
+}
+.dots {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 2px;
+}
+.dot,
+.dotOn {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+.dotOn {
+  background: var(--muted);
+}
+
+/* Answer choice */
+.question {
+  margin: 20px 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.choice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 52px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s,
+    transform 0.1s;
+}
+.choice:hover {
+  border-color: var(--line-strong);
+}
+.choice:active {
+  transform: scale(0.98);
+}
+.choiceSafe {
+  border-color: var(--success);
+  background: var(--success-soft);
+  color: var(--success);
+}
+.choiceScam {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.choiceSafe:hover,
+.choiceScam:hover {
+  border-color: currentColor;
+}
+
+/* Signal choice */
+.signals {
+  margin-top: 12px;
+}
+.tapHint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.tapHint svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+.tapText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tapCount {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+.signalsLabel {
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.signalChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.signalChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px 8px 10px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.signalChip:hover {
+  border-color: var(--fg);
+}
+.box {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid var(--line-strong);
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+}
+.signalOn {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.signalOn .box {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.check {
+  width: 100%;
+  margin-top: 14px;
+}
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.error {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--danger-soft);
+  color: var(--accent-strong);
+  font-size: 15px;
+}
+
+/* Result */
+.result {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 18px;
+  border: 1px solid;
+  animation: rise 0.25s ease-out;
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.resultOk {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.resultBad {
+  background: #fff5f5;
+  border-color: #fecaca;
+}
+.resultHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.resultOk .resultHead svg {
+  color: var(--success);
+}
+.resultBad .resultHead svg {
+  color: var(--accent);
+}
+.resultTitle {
+  font-size: 20px;
+  font-weight: 800;
+}
+.resultSub {
+  font-size: 15px;
+  color: var(--muted);
+}
+.explain {
+  margin: 14px 0 0;
+  font-size: 16px;
+  line-height: 1.65;
+}
+.group {
+  margin-top: 16px;
+}
+.groupLabel {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tag {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border-left: 4px solid;
+  background: var(--card);
+  font-size: 15px;
+}
+.tag span {
+  color: var(--muted);
+  line-height: 1.5;
+}
+.tagOk {
+  border-left-color: var(--success);
+}
+.tagWarn {
+  border-left-color: #f59e0b;
+}
+.tagBad {
+  border-left-color: var(--accent);
+}
+
+@media (max-width: 600px) {
+  .main {
+    padding: 0 14px;
+  }
+  .main {
+    padding-top: 16px;
+  }
+  .card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+  .split {
+    column-gap: 0;
+  }
+  .prompt {
+    font-size: 18px;
+  }
+  .choices {
+    grid-template-columns: 1fr;
+  }
+  .pager {
+    gap: 10px;
+  }
+  .pager .btn {
+    padding: 0 12px;
+  }
+  /* Narrow screens: progress as a number only (e.g. 5 / 11). */
+  .progressRow .segments {
+    display: none;
+  }
+  .pager .progressRow {
+    justify-content: center;
+  }
+  .progressRow .counter {
+    min-width: 0;
+    text-align: center;
+    font-size: 16px;
+    color: var(--fg);
+  }
+  /* Narrow screens: buttons show only arrows. */
+  .pagerLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .summaryActions .btn {
+    width: 100%;
+  }
+}
+
+/* ── Paged mode ── */
+.runner {
+  scroll-margin-top: 84px;
+}
+.progressRow {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.segments {
+  flex: 1;
+  display: flex;
+  gap: 5px;
+}
+.seg {
+  flex: 1;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: var(--line);
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.15s;
+}
+.seg:hover {
+  transform: scaleY(1.4);
+}
+.segOk {
+  background: var(--success);
+}
+.segBad {
+  background: var(--accent);
+}
+.segCurrent {
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 4px var(--fg);
+}
+.counter {
+  min-width: 52px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.pager {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  margin-top: 16px;
+}
+
+/* ── Summary ── */
+.summary {
+  text-align: left;
+  padding: 22px 24px;
+  overflow-y: auto;
+}
+.trophy {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: #fff;
+}
+.summaryHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.summaryText {
+  min-width: 0;
+}
+.summaryTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+.summaryScore {
+  margin-left: 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.summaryNote {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+.reviewLabel {
+  margin: 18px 0 8px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.reviewList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.reviewItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.reviewItem:hover {
+  border-color: var(--line-strong);
+}
+.reviewNum {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-soft);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.reviewText {
+  flex: 1;
+  color: var(--fg);
+  font-weight: 600;
+}
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--subtle);
+}
+.statusOk {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.statusBad {
+  background: var(--danger-soft);
+  color: var(--accent-strong);
+}
+.summaryActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-top: 18px;
+}
+.summaryMore {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .main {
+    --card-h: max(380px, calc(100dvh - 262px));
+  }
+  /* Narrow screens: one column, the whole card scrolls internally (fixed height kept). */
+  .split {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    margin-right: -8px;
+    padding-right: 8px;
+  }
+  .sim,
+  .answer {
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
+    margin-right: 0;
+    padding-right: 0;
+  }
+  .sim {
+    margin-top: 16px;
+  }
+}
+
+.pagerSpacer {
+  width: 1px;
+}
+
+.tagQuote {
+  display: block;
+  font-style: italic;
+  opacity: 0.8;
+  margin: 2px 0;
+}

@@ -1,8 +1,57 @@
+/* Main theme: white – red. */
 :root {
-  color-scheme: light dark;
-  --bg: #0b1020;
-  --fg: #e6edf3;
-  --accent: #4ade80;
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-soft: #f8f7f7; /* secondary background */
+  --bg-tint: #fff5f5; /* very light red tint */
+  --fg: #111014;
+  --muted: #64616b;
+  --subtle: #9a97a1;
+  --accent: #dc2626; /* flag red — RedFlag brand */
+  --accent-strong: #b91c1c;
+  --accent-soft: #fee2e2;
+  --accent-ink: #ffffff; /* text on accent */
+  --success: #15803d; /* correct answer */
+  --success-soft: #dcfce7;
+  --danger: #dc2626; /* warning/wrong */
+  --danger-soft: #fee2e2;
+  --warn: #b45309; /* missed */
+  --warn-soft: #fef3c7;
+  --card: #ffffff;
+  --line: #ebe8ec;
+  --line-strong: #dcd8de;
+
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 1px 2px rgba(17, 16, 20, 0.05);
+  --shadow: 0 1px 2px rgba(17, 16, 20, 0.04), 0 4px 16px rgba(17, 16, 20, 0.06);
+  --shadow-lg: 0 2px 4px rgba(17, 16, 20, 0.04), 0 20px 48px rgba(17, 16, 20, 0.1);
+  --shadow-accent: 0 8px 24px rgba(220, 38, 38, 0.28);
+  --font: var(--font-sans), system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Black – red: ONLY for the "You got caught!" page (wrapped in .theme-caught). */
+.theme-caught {
+  color-scheme: dark;
+  --bg: #0b0b0c;
+  --bg-soft: #140b0c;
+  --bg-tint: #1a0d0e;
+  --fg: #f5e9ea;
+  --muted: #a89a9b;
+  --subtle: #7d7071;
+  --accent: #ef4444;
+  --accent-soft: #3a1416;
+  --accent-ink: #ffffff;
+  --success: #22c55e;
+  --danger: #fca5a5;
+  --warn: #fbbf24;
+  --card: #170d0e;
+  --line: #3a1f22;
+  --line-strong: #4a2a2d;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
 }
 
 * {
@@ -15,16 +64,134 @@ body {
   padding: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family:
-    system-ui,
-    -apple-system,
-    Segoe UI,
-    Roboto,
-    sans-serif;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
 }
 
 main {
+  flex: 1;
+  width: 100%;
   max-width: 720px;
   margin: 0 auto;
   padding: 64px 24px;
+}
+
+a {
+  color: var(--accent);
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 3px solid rgba(220, 38, 38, 0.35);
+  outline-offset: 2px;
+}
+
+/* ── Shared buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 22px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s,
+    color 0.15s;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.btn-lg {
+  height: 56px;
+  padding: 0 28px;
+  font-size: 17px;
+  border-radius: 14px;
+}
+.btn-sm {
+  height: 38px;
+  padding: 0 14px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: var(--shadow-accent);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+}
+.btn-secondary {
+  background: var(--card);
+  color: var(--fg);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-sm);
+}
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--fg);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--fg);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--bg-soft);
+}
+
+/* ── Small labels ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.badge-dot::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }

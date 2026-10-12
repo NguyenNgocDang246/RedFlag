@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Post, Query, UseGuards } from '@nestjs/common';
 import { Locale } from '@prisma/client';
-import { DEFAULT_LOCALE, isSupportedLocale } from '@phishgym/shared';
+import { DEFAULT_LOCALE, isSupportedLocale } from '@redflag/shared';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard, type AuthedUser } from '../auth/jwt-auth.guard';
 import { expectedPhrase, TEST_WARNING_I18N } from '../confirmation';
@@ -11,7 +11,7 @@ import { OnboardingService } from './onboarding.service';
 export class OnboardingController {
   constructor(private readonly onboarding: OnboardingService) {}
 
-  /** Text cảnh báo + câu xác nhận kỳ vọng cho locale (để FE hiển thị). Public. */
+  /** Warning text + expected confirmation phrase for the locale (for the frontend). Public. */
   @Get('test-warning')
   warning(@Query('locale') localeParam?: string) {
     const locale: Locale =

@@ -21,7 +21,7 @@ describe('confirmation (type-to-confirm)', () => {
   it('rejects wrong or empty input', () => {
     expect(confirmationMatches('something else', 'vi')).toBe(false);
     expect(confirmationMatches(undefined, 'en')).toBe(false);
-    // đúng câu nhưng sai locale
+    // right phrase, wrong locale
     expect(confirmationMatches('I have read and understood', 'vi')).toBe(false);
   });
 });

@@ -2,9 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { createTransport, type Transporter } from 'nodemailer';
 
 /**
- * MailService — gửi email giao dịch (vd xác thực email).
- * Dev dùng Mailpit (SMTP giả). Email mô phỏng của campaign sẽ do delivery/worker
- * xử lý qua queue ở Phase 4; đây chỉ là kênh transactional nhẹ.
+ * MailService — sends transactional email (e.g. email verification).
+ * Dev uses Mailpit (fake SMTP). Simulated campaign email will go through delivery/worker
+ * queues in Phase 4; this is just the lightweight transactional channel.
  */
 @Injectable()
 export class MailService {
@@ -23,7 +23,7 @@ export class MailService {
   }
 
   async send(to: string, subject: string, html: string): Promise<void> {
-    const from = process.env.MAIL_FROM ?? 'PhishGym <no-reply@phishgym.local>';
+    const from = process.env.MAIL_FROM ?? 'RedFlag <no-reply@redflag.local>';
     await this.transporter.sendMail({ from, to, subject, html });
     this.logger.log(`Sent "${subject}" to ${to}`);
   }

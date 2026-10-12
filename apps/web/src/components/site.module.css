@@ -1,0 +1,297 @@
+/* ── Logo ── */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+}
+.logoMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+/* ── Header ── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: saturate(1.6) blur(14px);
+  -webkit-backdrop-filter: saturate(1.6) blur(14px);
+  border-bottom: 1px solid rgba(17, 16, 20, 0.06);
+}
+.inner {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+.brand {
+  text-decoration: none;
+}
+.nav {
+  display: flex;
+  gap: 4px;
+}
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  padding: 8px 14px;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+.navLink:hover {
+  color: var(--fg);
+  background: var(--bg-soft);
+}
+.navActive {
+  color: var(--fg);
+  background: var(--bg-soft);
+}
+.navIcon {
+  flex: 0 0 auto;
+  opacity: 0.8;
+}
+.right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Language pill switch */
+.seg {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+}
+.segBtn,
+.segOn {
+  height: 28px;
+  min-width: 38px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.segBtn {
+  background: transparent;
+  color: var(--subtle);
+}
+.segBtn:hover {
+  color: var(--fg);
+}
+.segOn {
+  background: var(--card);
+  color: var(--fg);
+  box-shadow: var(--shadow-sm);
+}
+
+.loginLink,
+.registerBtn {
+  font-size: 15px;
+}
+
+/* Account menu */
+.userBox {
+  position: relative;
+}
+.userBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px 3px 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+}
+.userBtn:hover {
+  border-color: var(--line-strong);
+}
+.avatar,
+.avatarLg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: #fff;
+  font-weight: 700;
+}
+.avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+.avatarLg {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+}
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  width: 260px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-lg);
+  animation: pop 0.14s ease-out;
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+.menuHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+.menuEmail {
+  min-width: 0;
+  font-size: 14px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  text-align: left;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+  cursor: pointer;
+}
+.menuItem:hover {
+  background: var(--bg-soft);
+  color: var(--accent);
+}
+
+/* ── Footer (single row) ── */
+.footer {
+  margin-top: 48px;
+  border-top: 1px solid var(--line);
+}
+.footInner {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.footBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.footBrand .logo {
+  font-size: 16px;
+}
+.footBrand .logoMark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  box-shadow: none;
+}
+.copy {
+  font-size: 13px;
+  color: var(--subtle);
+}
+.privacy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--subtle);
+}
+.footLinks {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.footLinks a {
+  font-size: 14px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.footLinks a:hover {
+  color: var(--fg);
+}
+
+@media (max-width: 640px) {
+  /* Two rows: brand + actions, then the nav as a scrollable strip (text only). */
+  .inner {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    padding: 10px 16px 0;
+    height: auto;
+  }
+  .nav {
+    order: 3;
+    width: calc(100% + 32px);
+    margin: 0 -16px;
+    padding: 0 12px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+  .navLink {
+    padding: 7px 12px;
+    font-size: 14px;
+  }
+  .navIcon,
+  .right .registerBtn {
+    display: none;
+  }
+  .right .loginLink {
+    padding: 0 10px;
+  }
+}

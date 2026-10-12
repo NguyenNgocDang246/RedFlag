@@ -1,5 +1,5 @@
 {
-  "name": "@phishgym/shared",
+  "name": "@redflag/shared",
   "version": "0.0.0",
   "private": true,
   "main": "./dist/index.js",

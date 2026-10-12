@@ -1,25 +1,25 @@
 /**
- * CategoryCode — "template cha": nhóm kịch bản lừa.
- * Đây là thuật ngữ NỘI BỘ (R9): không hiển thị trực tiếp lên UI người dùng.
- * Danh mục thực tế là DATA trong bảng `categories` (R6); enum này chỉ là
- * tập mã ổn định để code tham chiếu an toàn về kiểu.
+ * CategoryCode — parent scenario template (scam group). Internal term (R9), never shown in the UI.
+ * Real categories are DATA in the `categories` table (R6); this enum only gives stable, type-safe codes.
  */
 export const CategoryCode = {
-  BANK: 'BANK', // Ngân hàng
-  WALLET: 'WALLET', // Ví điện tử
-  SHIP: 'SHIP', // Giao hàng
-  GOV: 'GOV', // Cơ quan nhà nước
-  JOB: 'JOB', // Tuyển dụng / việc nhẹ lương cao
-  BEC: 'BEC', // Nội bộ công ty (sếp/kế toán/HR)
-  SUBSCR: 'SUBSCR', // Dịch vụ số (Netflix/Google/Apple...)
-  SOCIAL: 'SOCIAL', // Người quen (mượn tiền, nhờ vote)
-  ECOM: 'ECOM', // Sàn TMĐT
-  TELCO: 'TELCO', // Nhà mạng
-  UTIL: 'UTIL', // Điện nước
-  CUSTOMS: 'CUSTOMS', // Bưu kiện hải quan
-  LOAN: 'LOAN', // Vay / tín dụng
-  INVEST: 'INVEST', // Đầu tư
-  CHARITY: 'CHARITY', // Từ thiện
+  BANK: 'BANK',
+  WALLET: 'WALLET', // e-wallet
+  SHIP: 'SHIP', // delivery
+  GOV: 'GOV', // government agency
+  JOB: 'JOB', // recruitment / easy-money jobs
+  BEC: 'BEC', // internal company (boss/accounting/HR)
+  SUBSCR: 'SUBSCR', // digital subscriptions (Netflix/Google/Apple...)
+  SOCIAL: 'SOCIAL', // acquaintance (borrowing money, asking for votes)
+  ECOM: 'ECOM', // e-commerce
+  TELCO: 'TELCO',
+  UTIL: 'UTIL', // utilities (power/water)
+  CUSTOMS: 'CUSTOMS', // customs parcel
+  LOAN: 'LOAN', // loan / credit
+  INVEST: 'INVEST',
+  CHARITY: 'CHARITY',
+  EDU: 'EDU', // education / scholarships
+  ACC: 'ACC', // accounts & storage (email, cloud drive)
 } as const;
 
 export type CategoryCode = (typeof CategoryCode)[keyof typeof CategoryCode];

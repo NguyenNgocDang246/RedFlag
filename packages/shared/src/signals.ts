@@ -1,21 +1,27 @@
 /**
- * SignalCode — dấu hiệu lừa đảo. Nền tảng của việc chấm điểm theo signal (R7):
- * mỗi variant gắn 1-2 signal; quiz hỏi "dấu hiệu nào khiến bạn nghi?" dưới dạng
- * trắc nghiệm nhiều lựa chọn lấy từ chính tập này.
+ * SignalCode — scam red flags. Basis of signal-based grading (R7): each variant has 1-2
+ * signals; the quiz asks "which signs made you suspicious?" as multiple choice drawn from
+ * this set.
  *
- * Thuật ngữ nội bộ (R9) — UI hiển thị nhãn thân thiện qua i18n, không show mã.
+ * Internal term (R9) — the UI shows friendly i18n labels, never the code.
+ *
+ * This is the DEFAULT SEED set, not a closed list: real signals are DATA in the `signals`
+ * table (admins can add more — R6). Validate external codes against the DB, not this constant.
  */
 export const SignalCode = {
-  LOOKALIKE_DOMAIN: 'LOOKALIKE_DOMAIN', // tên miền giả gần giống
-  SENDER_MISMATCH: 'SENDER_MISMATCH', // email người gửi lệch với tên hiển thị
-  HIDDEN_LINK: 'HIDDEN_LINK', // link ẩn khác chữ hiển thị
-  URGENCY: 'URGENCY', // tạo cảm giác khẩn cấp
-  SENSITIVE_REQUEST: 'SENSITIVE_REQUEST', // đòi OTP/mật khẩu/số thẻ/giấy tờ
-  SUSPICIOUS_ATTACHMENT: 'SUSPICIOUS_ATTACHMENT', // file đính kèm lạ
-  GENERIC_GREETING: 'GENERIC_GREETING', // lời chào chung chung
-  SPELLING_ERRORS: 'SPELLING_ERRORS', // sai chính tả / dịch máy
-  TOO_GOOD: 'TOO_GOOD', // quá tốt để là thật
-  OFF_CHANNEL: 'OFF_CHANNEL', // bắt chuyển kênh lạ (Zalo/Telegram riêng)
+  LOOKALIKE_DOMAIN: 'LOOKALIKE_DOMAIN', // domain that looks like the real one
+  SENDER_MISMATCH: 'SENDER_MISMATCH', // sender address doesn't match display name
+  HIDDEN_LINK: 'HIDDEN_LINK', // link target differs from its text
+  URGENCY: 'URGENCY',
+  SENSITIVE_REQUEST: 'SENSITIVE_REQUEST', // asks for OTP/password/card number/ID
+  SUSPICIOUS_ATTACHMENT: 'SUSPICIOUS_ATTACHMENT',
+  GENERIC_GREETING: 'GENERIC_GREETING',
+  SPELLING_ERRORS: 'SPELLING_ERRORS', // typos / machine translation
+  TOO_GOOD: 'TOO_GOOD', // too good to be true
+  OFF_CHANNEL: 'OFF_CHANNEL', // pushes to another channel (private Zalo/Telegram)
+  MISSING_DETAILS: 'MISSING_DETAILS', // lacks specific identifiers (account no./order ID/plate)
+  UNTRUSTED_APP: 'UNTRUSTED_APP', // app outside the store / excessive permissions (accessibility)
+  PAYMENT_CHANGE: 'PAYMENT_CHANGE', // sudden change of payee account (invoice fraud / BEC)
 } as const;
 
 export type SignalCode = (typeof SignalCode)[keyof typeof SignalCode];

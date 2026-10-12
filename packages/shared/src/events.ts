@@ -1,14 +1,14 @@
 /**
- * EventType — hành vi của user với một bài test (Test flow).
- * QUAN TRỌNG (R2): event chỉ là TÍN HIỆU, không bao giờ kèm PII.
- * "submitted" nghĩa là user chạm tới bước gửi form giả — KHÔNG lưu nội dung đã nhập.
+ * EventType — user behavior on a test email (Test flow).
+ * IMPORTANT (R2): events are SIGNALS only, never PII.
+ * "submitted" means the user reached the fake form's submit step — entered values are NOT stored.
  */
 export const EventType = {
-  OPENED: 'opened', // mở email (pixel)
-  CLICKED: 'clicked', // bấm link trong email
-  SUBMITTED: 'submitted', // chạm bước submit trên trang giả (tín hiệu "dính")
-  REPORTED: 'reported', // user báo cáo đây là lừa đảo (nhận ra)
-  IGNORED: 'ignored', // bỏ qua (suy ra khi hết hạn, không tương tác)
+  OPENED: 'opened', // email opened (pixel)
+  CLICKED: 'clicked', // link in the email clicked
+  SUBMITTED: 'submitted', // reached submit on the fake page ("caught")
+  REPORTED: 'reported', // user reported it as a scam
+  IGNORED: 'ignored', // inferred on expiry with no interaction
 } as const;
 
 export type EventType = (typeof EventType)[keyof typeof EventType];

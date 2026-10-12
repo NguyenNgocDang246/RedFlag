@@ -1,5 +1,5 @@
 {
-  "name": "@phishgym/api",
+  "name": "@redflag/api",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,7 @@
     "start:prod": "node dist/main.js",
     "start:worker": "ts-node -r tsconfig-paths/register src/worker.ts",
     "start:worker:prod": "node dist/worker.js",
+    "data": "ts-node -r tsconfig-paths/register src/cli/data.ts",
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
@@ -26,7 +27,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/platform-express": "^11.0.1",
-    "@phishgym/shared": "workspace:*",
+    "@redflag/shared": "workspace:*",
     "@prisma/client": "^6.1.0",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",

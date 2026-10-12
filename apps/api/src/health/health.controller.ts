@@ -6,7 +6,7 @@ export class HealthController {
   check() {
     return {
       status: 'ok',
-      service: 'phishgym-api',
+      service: 'redflag-api',
       uptime: Math.round(process.uptime()),
       timestamp: new Date().toISOString(),
     };

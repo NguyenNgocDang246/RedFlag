@@ -1,0 +1,1322 @@
+/*
+ * Simulated shells: colors/spacing follow the real apps and do NOT use site theme tokens,
+ * so shells always look real whatever theme the site is in.
+ */
+
+/* ───────── Chung ───────── */
+.wrap {
+  margin: 0;
+}
+.spot {
+  border-radius: 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+}
+/* Link with a hidden destination: looks like a normal link; the real URL shows on hover/tap. */
+.linkSpot {
+  position: relative;
+  color: #0b57d0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.linkPreview {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+  display: none;
+  max-width: 260px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #202124;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.linkSpot:hover > .linkPreview,
+.linkSpot:focus > .linkPreview {
+  display: block;
+}
+.live {
+  cursor: pointer;
+}
+.live:hover {
+  background: rgba(60, 64, 67, 0.08);
+}
+.live:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 1px;
+}
+.picked {
+  background: rgba(217, 48, 37, 0.14);
+  box-shadow: 0 0 0 2px #d93025;
+}
+.picked:hover {
+  background: rgba(217, 48, 37, 0.2);
+}
+.matched {
+  background: rgba(30, 142, 62, 0.14);
+  box-shadow: 0 0 0 2px #1e8e3e;
+}
+.missed {
+  background: rgba(249, 171, 0, 0.2);
+  box-shadow: 0 0 0 2px #f9ab00;
+}
+.wrong {
+  background: rgba(217, 48, 37, 0.08);
+  box-shadow: 0 0 0 2px #d93025;
+  text-decoration: line-through;
+}
+
+.skeleton {
+  height: 10px;
+  border-radius: 5px;
+  background: #e8eaed;
+  margin: 10px auto;
+}
+
+/* ───────── Desktop window frame ───────── */
+.window {
+  container-type: inline-size;
+  border: 1px solid #dadce0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  color: #1f1f1f;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 10px 30px rgba(0, 0, 0, 0.08);
+  font-family: 'Google Sans', Roboto, 'Segoe UI', Arial, sans-serif;
+  text-align: left;
+}
+.winCtl {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: auto;
+  padding: 0 10px;
+}
+
+/* ───────── Phone frame ───────── */
+.phone {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 48px;
+  background: #1c1c1e;
+  box-shadow:
+    0 0 0 2px #3a3a3c inset,
+    0 12px 36px rgba(0, 0, 0, 0.18);
+}
+.screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* The host page can set --phone-h to fit the phone in its frame (default 600px). */
+  min-height: var(--phone-h, 600px);
+  border-radius: 38px;
+  overflow: hidden;
+  background: #fff;
+  color: #000;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  text-align: left;
+}
+.status {
+  position: relative;
+  height: 48px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 26px 0 34px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.island {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  transform: translateX(-50%);
+  width: 96px;
+  height: 28px;
+  border-radius: 14px;
+  background: #000;
+}
+.statusIcons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.homeBar {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 128px;
+  height: 5px;
+  border-radius: 3px;
+  background: #000;
+  opacity: 0.85;
+}
+
+/* ───────── Webmail (Gmail-style) ───────── */
+.gm {
+  background: #f6f8fc;
+}
+.gmTop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  color: #444746;
+}
+.gmIconBtn,
+.gmTool {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #444746;
+  flex: 0 0 auto;
+}
+.gmLogo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 28px;
+  font-size: 22px;
+  color: #444746;
+}
+.gmSearch {
+  flex: 1;
+  min-width: 0;
+  max-width: 720px;
+  height: 46px;
+  border-radius: 23px;
+  background: #e9eef6;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 14px;
+  font-size: 16px;
+  color: #444746;
+}
+.gmSearchText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gmMe {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #7b1fa2;
+  color: #fff;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+.gmBody {
+  display: flex;
+}
+.gmSide {
+  width: 76px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+}
+.gmCompose {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: #c2e7ff;
+  color: #001d35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+.gmNav {
+  width: 56px;
+  height: 32px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #444746;
+}
+.gmNavActive {
+  background: #d3e3fd;
+  color: #041e49;
+}
+.gmMain {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border-radius: 16px;
+  margin: 0 14px 14px 0;
+}
+.gmToolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  border-bottom: 1px solid #f1f3f4;
+}
+.gmSubjectRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 18px 16px 6px 72px;
+}
+.gmSubject {
+  margin: 0;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 400;
+  color: #1f1f1f;
+}
+.gmChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  line-height: 18px;
+  padding: 0 2px 0 5px;
+  border-radius: 4px;
+  background: #e8eaed;
+  color: #444746;
+}
+.gmSender {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px 0 16px;
+}
+.gmAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 500;
+}
+.gmFrom {
+  flex: 1;
+  min-width: 0;
+  padding-top: 2px;
+}
+.gmFromLine {
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+.gmName {
+  font-weight: 700;
+  color: #1f1f1f;
+}
+.gmAddr {
+  font-size: 12px;
+  color: #5e5e5e;
+}
+.gmTo {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  color: #5e5e5e;
+}
+.gmMeta {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  font-size: 12px;
+  color: #5e5e5e;
+  white-space: nowrap;
+  margin-top: -8px;
+}
+.gmMeta > span:first-child {
+  margin-right: 6px;
+}
+.gmMessage {
+  padding: 16px 16px 4px 68px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: #222;
+}
+.gmMessage p {
+  white-space: pre-line;
+  margin: 0 0 12px;
+}
+.gmAtts {
+  margin: 8px 16px 0 68px;
+  padding-top: 14px;
+  border-top: 1px solid #e0e0e0;
+}
+.gmAttsHead {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f1f1f;
+  margin-bottom: 12px;
+}
+.gmAttList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.gmAttCard {
+  width: 180px;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.gmAttPreview {
+  height: 96px;
+  background: #f1f3f4;
+  display: flex;
+  justify-content: center;
+  padding-top: 14px;
+}
+.gmAttPage {
+  width: 60px;
+  height: 82px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+.gmAttFoot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  border-top: 1px solid #dadce0;
+}
+.gmAttName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.gmBadge {
+  flex: 0 0 auto;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 3px;
+  border-radius: 2px;
+  letter-spacing: 0.2px;
+}
+.gmActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 24px 16px 22px 68px;
+}
+.gmPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 18px 0 14px;
+  border: 1px solid #747775;
+  border-radius: 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #444746;
+}
+
+@container (max-width: 620px) {
+  .gmSide,
+  .gmLogoText,
+  .gmHideNarrow {
+    display: none;
+  }
+  .gmLogo {
+    margin-right: 4px;
+  }
+  .gmMain {
+    margin: 0;
+    border-radius: 0;
+  }
+  .gmSubjectRow,
+  .gmMessage,
+  .gmActions {
+    padding-left: 16px;
+  }
+  .gmAtts {
+    margin-left: 16px;
+  }
+  .gmToolbar > span:nth-child(n + 5) {
+    display: none;
+  }
+  .gmAddr {
+    display: block;
+  }
+  .gmSender {
+    padding-right: 4px;
+  }
+}
+
+/* ───────── Browser (Chrome-style) ───────── */
+.chStrip {
+  display: flex;
+  align-items: flex-end;
+  height: 42px;
+  padding: 8px 0 0 8px;
+  background: #dfe3e8;
+}
+.chStrip .winCtl {
+  align-self: center;
+  margin-top: -8px;
+}
+.chTab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  width: 240px;
+  min-width: 0;
+  padding: 0 10px 0 12px;
+  border-radius: 10px 10px 0 0;
+  background: #fff;
+  font-size: 12px;
+  color: #1f1f1f;
+}
+.chFav {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: #5f6368;
+  color: #fff;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chTabTitle {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chNewTab {
+  display: flex;
+  align-self: center;
+  margin: -6px 0 0 8px;
+}
+.chBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #fff;
+  border-bottom: 1px solid #e3e3e3;
+  color: #474747;
+}
+.chNav {
+  display: flex;
+  gap: 14px;
+  padding: 0 4px;
+}
+.chOmni {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  border-radius: 18px;
+  background: #edf2fa;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 0 6px;
+  font-size: 14px;
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+}
+.chSite {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: #474747;
+}
+.chUrl {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chHost {
+  color: #1f1f1f;
+}
+.chRest {
+  color: #6b6b6b;
+}
+.chMe {
+  display: flex;
+}
+.chPage {
+  min-height: 240px;
+  padding: 40px 24px 36px;
+  text-align: center;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #fff;
+}
+.webTitle {
+  margin: 0 0 14px;
+  font-size: 28px;
+  color: #202124;
+}
+.webText {
+  white-space: pre-line;
+  margin: 0 0 10px;
+  font-size: 16px;
+  line-height: 24px;
+  color: #3c4043;
+}
+.webBtns {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+.webBtn,
+.webBtnGhost {
+  display: inline-block;
+  padding: 12px 28px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.webBtn {
+  background: #ee4d2d;
+  color: #fff;
+}
+.webBtnGhost {
+  border: 1px solid #dadce0;
+  color: #3c4043;
+}
+
+@container (max-width: 520px) {
+  .chNav,
+  .chNewTab,
+  .chStrip .winCtl {
+    display: none;
+  }
+  .chTab {
+    width: auto;
+    flex: 1;
+    margin-right: 8px;
+  }
+  /* Like Chrome mobile: show only the host, never truncate the domain. */
+  .chRest,
+  .chOmni > svg {
+    display: none;
+  }
+  .chOmni {
+    height: auto;
+    min-height: 36px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  .chUrl {
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+}
+
+/* ───────── SMS (iOS Messages style) ───────── */
+.iosHead {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 2px 0 8px;
+  background: #f6f6f6;
+  border-bottom: 0.5px solid #d1d1d6;
+}
+.iosBack {
+  position: absolute;
+  left: 4px;
+  top: 12px;
+}
+.iosContact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.iosAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(#a5abb8, #868b96);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+.iosName {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  font-size: 12px;
+  color: #000;
+}
+.iosThread {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  overflow: auto;
+}
+.iosStamp {
+  text-align: center;
+  font-size: 11px;
+  line-height: 14px;
+  color: #8e8e93;
+  margin-bottom: 10px;
+}
+.iosBubble {
+  align-self: flex-start;
+  max-width: 78%;
+  padding: 8px 13px;
+  border-radius: 19px;
+  background: #e9e9eb;
+  font-size: 16px;
+  line-height: 21px;
+  overflow-wrap: anywhere;
+}
+.iosLink {
+  color: #007aff;
+  text-decoration: underline;
+}
+.iosInput {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 30px;
+}
+.iosPlus {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #e9e9eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.iosField {
+  flex: 1;
+  height: 36px;
+  border: 1px solid #c7c7cc;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px 0 14px;
+  font-size: 16px;
+  color: #c7c7cc;
+}
+
+/* ───────── Chat (WhatsApp-style) ───────── */
+.waHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 10px 8px;
+  background: #008069;
+  color: #fff;
+}
+.waAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #dfe5e7;
+  color: #54656f;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.waWho {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.waName {
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.waOnline {
+  font-size: 12px;
+  opacity: 0.85;
+}
+.waIcons {
+  display: flex;
+  gap: 16px;
+}
+.waThread {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background-color: #efeae2;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+  background-size: 14px 14px;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+.waDay {
+  align-self: center;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12px;
+  color: #54656f;
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+}
+.waThem,
+.waMe {
+  max-width: 82%;
+  padding: 6px 8px 8px 9px;
+  border-radius: 8px;
+  font-size: 14.5px;
+  line-height: 19px;
+  color: #111b21;
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+  overflow-wrap: anywhere;
+}
+.waThem {
+  align-self: flex-start;
+  background: #fff;
+  border-top-left-radius: 0;
+}
+.waMe {
+  align-self: flex-end;
+  background: #d9fdd3;
+  border-top-right-radius: 0;
+}
+.waTime {
+  float: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin: 6px 0 -4px 10px;
+  font-size: 11px;
+  color: #667781;
+}
+.waLink {
+  color: #027eb5;
+  text-decoration: underline;
+}
+.waInput {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 6px 30px;
+  background: #efeae2;
+}
+.waField {
+  flex: 1;
+  height: 46px;
+  border-radius: 23px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+}
+.waPlaceholder {
+  flex: 1;
+  font-size: 16px;
+  color: #8696a0;
+}
+.waMic {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #00a884;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+/* ───────── QR camera (iOS Camera style) ───────── */
+.camView {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px 18px;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.18), transparent 60%),
+    linear-gradient(160deg, #5b5d57, #2e2f2b 55%, #1d1d1b);
+}
+.camPoster {
+  width: 78%;
+  padding: 14px 14px 18px;
+  border-radius: 6px;
+  background: #f4f1e8;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  transform: rotate(-2deg);
+  text-align: center;
+}
+.camPosterText {
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1d3557;
+}
+.camQrWrap {
+  position: relative;
+  width: 70%;
+  margin: 0 auto;
+}
+.camQr {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.camCorner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 3px solid #ffd60a;
+}
+.tl {
+  top: -10px;
+  left: -10px;
+  border-right: 0;
+  border-bottom: 0;
+  border-top-left-radius: 6px;
+}
+.tr {
+  top: -10px;
+  right: -10px;
+  border-left: 0;
+  border-bottom: 0;
+  border-top-right-radius: 6px;
+}
+.bl {
+  bottom: -10px;
+  left: -10px;
+  border-right: 0;
+  border-top: 0;
+  border-bottom-left-radius: 6px;
+}
+.br {
+  bottom: -10px;
+  right: -10px;
+  border-left: 0;
+  border-top: 0;
+  border-bottom-right-radius: 6px;
+}
+.camPill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 92%;
+  padding: 8px 16px 8px 12px;
+  border-radius: 14px;
+  background: #ffd60a;
+  color: #1c1c1e;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+.camPillText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.camPillSmall {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.75;
+}
+.camBar {
+  padding: 10px 0 34px;
+  background: #000;
+  color: #fff;
+}
+.camModes {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #fff;
+  margin-bottom: 14px;
+}
+.camModeOn {
+  color: #ffd60a;
+}
+.camControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 34px;
+}
+.camThumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #8a8f7a, #3e4436);
+}
+.camShutter {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 4px #000,
+    0 0 0 7px #fff;
+}
+.camFlip {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #2c2c2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ───────── Permission screen (OAuth consent style) ───────── */
+.ocBg {
+  background: #f0f4f9;
+  padding: 28px 16px;
+}
+.ocCard {
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 24px 28px 22px;
+  border-radius: 28px;
+  background: #fff;
+  color: #1f1f1f;
+}
+.ocTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #444746;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e3e3e3;
+}
+.ocLogo {
+  width: 48px;
+  height: 48px;
+  margin: 22px 0 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #34a853, #0b8043);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ocTitle {
+  margin: 0 0 12px;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 400;
+}
+.ocAccount {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 8px 0 4px;
+  border: 1px solid #c4c7c5;
+  border-radius: 16px;
+  font-size: 14px;
+  color: #1f1f1f;
+}
+.ocAccountDot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #7b1fa2;
+  color: #fff;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ocPublisher {
+  margin: 14px 0 0;
+  font-size: 14px;
+  color: #444746;
+}
+.ocAllow {
+  margin: 20px 0 8px;
+  font-size: 16px;
+  font-weight: 500;
+}
+.ocList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ocList li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e3e3e3;
+  font-size: 14px;
+  line-height: 20px;
+}
+.ocPermIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #d3e3fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.ocPermText {
+  flex: 1;
+  min-width: 0;
+}
+.ocTrustHead {
+  margin: 20px 0 6px;
+  font-size: 16px;
+  font-weight: 500;
+}
+.ocTrust {
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: #444746;
+}
+.ocBtns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}
+.ocCancel,
+.ocOk {
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+}
+.ocCancel {
+  color: #0b57d0;
+}
+.ocOk {
+  background: #0b57d0;
+  color: #fff;
+}
+
+/* ───────── Document (Word-style) ───────── */
+.wdTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding-left: 12px;
+  background: #185abd;
+  color: #fff;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 13px;
+}
+.wdLogo {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  background: #fff;
+  color: #185abd;
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wdName {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.wdTabs {
+  display: flex;
+  gap: 18px;
+  padding: 8px 14px;
+  background: #f3f2f1;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 13px;
+  color: #323130;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.wdTabOn {
+  color: #185abd;
+  box-shadow: 0 2px 0 #185abd;
+}
+.wdWarn {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 14px;
+  background: #fff4ce;
+  border-top: 1px solid #e1dfdd;
+  border-bottom: 1px solid #e1dfdd;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 13px;
+  color: #323130;
+}
+.wdEnable {
+  padding: 3px 12px;
+  border: 1px solid #8a8886;
+  border-radius: 2px;
+  background: #fff;
+}
+.wdCanvas {
+  padding: 24px 16px;
+  background: #e6e6e6;
+}
+.wdPage {
+  max-width: 520px;
+  min-height: 220px;
+  margin: 0 auto;
+  padding: 40px 44px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif;
+  font-size: 15px;
+  line-height: 22px;
+}
+.wdPage p {
+  white-space: pre-line;
+  margin: 0 0 10px;
+}
+
+/* ───────── Android installer (sideloaded APK) ───────── */
+.apk {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px 36px;
+  background: #f3f3f8;
+  font-family: Roboto, 'Segoe UI', system-ui, sans-serif;
+  color: #1f1f1f;
+}
+.apkHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #dadce0;
+}
+.apkIcon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #34a853, #188038);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+}
+.apkName {
+  font-size: 20px;
+  font-weight: 500;
+}
+.apkProtect {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fce8e6;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.apkAsk {
+  margin: 16px 0 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #444746;
+}
+.apkList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.apkList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e3e3e8;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.apkBtns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 28px;
+  margin-top: auto;
+  padding-top: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #0b57d0;
+}

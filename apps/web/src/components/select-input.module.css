@@ -1,0 +1,151 @@
+/* Shared select. The native control fills the wrapper; the chevron is drawn on top (clicks pass through). */
+.wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  vertical-align: middle;
+}
+.select {
+  width: 100%;
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  font: inherit;
+  color: var(--fg);
+  background: var(--card);
+  border: 1px solid var(--line-strong);
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    background-color 0.15s;
+}
+.select:hover {
+  border-color: var(--muted);
+}
+.select:focus {
+  outline: none;
+}
+.select:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+.chevron {
+  position: absolute;
+  right: 10px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* ── Sizes ── */
+.md .select {
+  height: 40px;
+  padding: 0 34px 0 12px;
+  font-size: 14px;
+}
+.sm .select {
+  height: 34px;
+  padding: 0 30px 0 10px;
+  font-size: 13.5px;
+}
+.sm .chevron {
+  right: 9px;
+}
+
+/* ── Variants ── */
+.field .select {
+  border-radius: 9px;
+}
+.pill .select {
+  border-color: var(--line);
+  border-radius: 999px;
+  font-weight: 600;
+}
+.pill.md .select {
+  padding-left: 14px;
+}
+.pill .select:hover {
+  border-color: var(--line-strong);
+}
+
+/* Width follows the chosen option, not the longest one. */
+.fit {
+  width: auto;
+  max-width: 100%;
+}
+.fit .select {
+  width: auto;
+  max-width: 260px;
+  field-sizing: content;
+}
+
+/* ── States ── */
+.active .select {
+  border-color: var(--accent);
+  background-color: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.active .chevron {
+  color: var(--accent-strong);
+}
+.success .select {
+  border-color: var(--success);
+  background-color: var(--success-soft);
+}
+.warn .select {
+  border-color: var(--warn);
+  background-color: var(--warn-soft);
+}
+.disabled .select {
+  cursor: default;
+  color: var(--muted);
+  background-color: var(--bg-soft);
+  border-color: var(--line);
+}
+.disabled .chevron {
+  opacity: 0.5;
+}
+
+/* ── Optional label ── */
+.labelled {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.labelledBlock {
+  display: flex;
+  width: 100%;
+}
+.labelText {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  /* 16px stops iOS from zooming into the page when the select is tapped. */
+  .select,
+  .sm .select,
+  .md .select {
+    font-size: 16px;
+  }
+  /* Phones: filters take the full row, so stretch "fit" selects too. */
+  .fit,
+  .fit .select {
+    width: 100%;
+    max-width: none;
+  }
+}

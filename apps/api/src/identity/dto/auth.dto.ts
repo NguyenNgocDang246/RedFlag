@@ -1,5 +1,5 @@
 import { IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
-import { SUPPORTED_LOCALES } from '@phishgym/shared';
+import { SUPPORTED_LOCALES } from '@redflag/shared';
 
 export class RegisterDto {
   @IsEmail()

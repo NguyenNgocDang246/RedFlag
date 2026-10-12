@@ -30,3 +30,6 @@ coverage/
 
 # prisma (generated client, added in Phase 1)
 apps/api/src/generated/
+
+# playwright
+.playwright-mcp/

@@ -5,9 +5,10 @@ import {
   IsIn,
   IsOptional,
   IsString,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
-import { ALL_CATEGORY_CODES, SUPPORTED_LOCALES, TestFrequency } from '@phishgym/shared';
+import { SUPPORTED_LOCALES, TestFrequency } from '@redflag/shared';
 
 export class ProfileDto {
   @IsOptional()
@@ -29,8 +30,10 @@ export class ProfileDto {
 }
 
 export class TrainingDto {
+  // Categories are data (admins can add more) — the service filters against the categories table.
   @IsArray()
-  @IsIn(ALL_CATEGORY_CODES, { each: true })
+  @IsString({ each: true })
+  @MaxLength(32, { each: true })
   interests!: string[];
 }
 
@@ -42,7 +45,7 @@ export class TestDto {
   @IsIn(Object.values(TestFrequency))
   frequency?: string;
 
-  // Câu user gõ lại (type-to-confirm) — bắt buộc khi enabled = true.
+  // Phrase retyped by the user (type-to-confirm) — required when enabled = true.
   @IsOptional()
   @IsString()
   confirmationText?: string;

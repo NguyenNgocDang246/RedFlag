@@ -1,25 +1,25 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: phishgym-postgres
+    container_name: redflag-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-phishgym}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-phishgym}
-      POSTGRES_DB: ${POSTGRES_DB:-phishgym}
+      POSTGRES_USER: ${POSTGRES_USER:-redflag}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-redflag}
+      POSTGRES_DB: ${POSTGRES_DB:-redflag}
     ports:
       - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-phishgym}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-redflag}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   redis:
     image: redis:7-alpine
-    container_name: phishgym-redis
+    container_name: redflag-redis
     restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6380}:6379"
@@ -31,10 +31,10 @@ services:
       timeout: 5s
       retries: 10
 
-  # SMTP giả cho dev: nhận mail, xem qua UI, không gửi ra ngoài
+  # Dev SMTP sink: catches mail with a web UI, never sends out
   mailpit:
     image: axllent/mailpit:latest
-    container_name: phishgym-mailpit
+    container_name: redflag-mailpit
     restart: unless-stopped
     ports:
       - "1025:1025" # SMTP
