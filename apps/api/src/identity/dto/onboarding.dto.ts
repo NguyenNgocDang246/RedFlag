@@ -65,3 +65,25 @@ export class OnboardingDto {
   @Type(() => TestDto)
   test!: TestDto;
 }
+
+const FREQUENCIES = ['low', 'medium', 'high'] as const;
+
+/** Turn tests on from the /me page (type-to-confirm). */
+export class EnableTestDto {
+  @IsIn(FREQUENCIES)
+  frequency!: 'low' | 'medium' | 'high';
+
+  @IsString()
+  @MaxLength(200)
+  confirmationText!: string;
+
+  /** Language of the phrase the user saw (defaults to their profile language). */
+  @IsOptional()
+  @IsIn(SUPPORTED_LOCALES)
+  locale?: 'en' | 'vi';
+}
+
+export class TestFrequencyDto {
+  @IsIn(FREQUENCIES)
+  frequency!: 'low' | 'medium' | 'high';
+}

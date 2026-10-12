@@ -1,7 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  NotFoundException,
+  Param,
+  Patch,
   Headers,
   HttpCode,
   Post,
@@ -12,7 +16,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { CookieOptions, Request, Response } from 'express';
-import { LoginDto, RegisterDto, VerifyEmailDto } from '../dto/auth.dto';
+import { ChangePasswordDto, LoginDto, RegisterDto, UpdateProfileDto, VerifyEmailDto } from '../dto/auth.dto';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './current-user.decorator';
 import {
@@ -140,5 +144,44 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   me(@CurrentUser() user: AuthedUser) {
     return this.auth.me(user.id);
+  }
+
+  /** Personal info (name, occupation, services, language) — all optional. */
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  updateProfile(@CurrentUser() user: AuthedUser, @Body() dto: UpdateProfileDto) {
+    return this.auth.updateProfile(user.id, dto);
+  }
+
+  /** New password → every other device is signed out; this one stays signed in. */
+  @Post('password')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard)
+  async changePassword(@CurrentUser() user: AuthedUser, @Req() req: Request, @Body() dto: ChangePasswordDto) {
+    await this.auth.changePassword(user.id, dto.currentPassword, dto.newPassword);
+    await this.sessions.revokeOthers(user.id, req.cookies?.[REFRESH_COOKIE] as string | undefined);
+    return { ok: true };
+  }
+
+  /** Signed-in devices. Lives under /auth so the refresh cookie arrives and marks the current one. */
+  @Get('sessions')
+  @UseGuards(JwtAuthGuard)
+  listSessions(@CurrentUser() user: AuthedUser, @Req() req: Request) {
+    return this.sessions.list(user.id, req.cookies?.[REFRESH_COOKIE] as string | undefined);
+  }
+
+  @Post('sessions/revoke-others')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard)
+  async revokeOtherSessions(@CurrentUser() user: AuthedUser, @Req() req: Request) {
+    await this.sessions.revokeOthers(user.id, req.cookies?.[REFRESH_COOKIE] as string | undefined);
+    return { ok: true };
+  }
+
+  @Delete('sessions/:id')
+  @UseGuards(JwtAuthGuard)
+  async revokeSession(@CurrentUser() user: AuthedUser, @Param('id') id: string) {
+    if (!(await this.sessions.revokeById(user.id, id))) throw new NotFoundException('Session not found');
+    return { ok: true };
   }
 }

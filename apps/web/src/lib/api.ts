@@ -191,6 +191,8 @@ export interface Me {
   id: string;
   email: string;
   name: string | null;
+  occupation: string | null;
+  servicesUsed: string[];
   locale: Locale;
   emailVerified: boolean;
   role: 'user' | 'admin';
@@ -303,3 +305,82 @@ export const answerContest = (
     method: 'POST',
     body: JSON.stringify(body),
   });
+
+// ─── My page (/me) ───
+
+export interface Progress {
+  practice: { answers: number; scenarios: number };
+  /** Practice answers + contest questions. */
+  answered: number;
+  correct: number;
+  falseAlarms: number;
+  missedScams: number;
+  contests: {
+    count: number;
+    /** Best score in %, among recent rounds. */
+    best: number | null;
+    recent: { id: string; finishedAt: string | null; score: number; maxScore: number }[];
+  };
+  /** Most-missed first. */
+  signals: { code: string; name: string; spotted: number; missed: number }[];
+}
+
+export type TestFrequencyLevel = 'low' | 'medium' | 'high';
+
+export interface TestStatus {
+  state: 'on' | 'paused' | 'off';
+  frequency: TestFrequencyLevel | null;
+}
+
+export interface TestWarning {
+  locale: Locale;
+  warning: string;
+  confirmPhrase: string;
+}
+
+export interface DeviceSession {
+  id: string;
+  userAgent: string | null;
+  createdAt: string;
+  lastUsedAt: string;
+  current: boolean;
+}
+
+async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await apiFetch(path, init);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = Array.isArray(data.message) ? data.message.join(' ') : String(data.message ?? '');
+    throw new ApiError(res.status, msg);
+  }
+  return data as T;
+}
+
+const json = (method: string, body?: unknown): RequestInit => ({
+  method,
+  ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+});
+
+export const updateProfile = (body: {
+  name?: string;
+  occupation?: string;
+  servicesUsed?: string[];
+  locale?: Locale;
+}) => call<Me>('/auth/me', json('PATCH', body));
+
+export const changePassword = (currentPassword: string, newPassword: string) =>
+  call<{ ok: true }>('/auth/password', json('POST', { currentPassword, newPassword }));
+
+export const fetchSessions = () => call<DeviceSession[]>('/auth/sessions');
+export const revokeSession = (id: string) => call<{ ok: true }>(`/auth/sessions/${encodeURIComponent(id)}`, json('DELETE'));
+export const revokeOtherSessions = () => call<{ ok: true }>('/auth/sessions/revoke-others', json('POST'));
+
+export const fetchTestWarning = (locale: Locale) => call<TestWarning>(`/onboarding/test-warning?locale=${locale}`);
+export const enableTest = (frequency: TestFrequencyLevel, confirmationText: string, locale: Locale) =>
+  call<{ enabled: true }>('/test/enable', json('POST', { frequency, confirmationText, locale }));
+export const setTestFrequency = (frequency: TestFrequencyLevel) =>
+  call<TestStatus>('/test/frequency', json('PATCH', { frequency }));
+export const pauseTest = () => call<unknown>('/test/pause', json('POST'));
+export const resumeTest = () => call<unknown>('/test/resume', json('POST'));
+export const unsubscribeTest = () => call<unknown>('/test/unsubscribe', json('POST'));
+export const fetchTestStatus = () => call<TestStatus>('/test');

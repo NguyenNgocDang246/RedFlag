@@ -205,6 +205,9 @@
   color: var(--fg);
   cursor: pointer;
 }
+.menuLink {
+  text-decoration: none;
+}
 .menuItem:hover {
   background: var(--bg-soft);
   color: var(--accent);

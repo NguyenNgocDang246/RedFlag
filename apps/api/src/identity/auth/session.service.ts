@@ -102,6 +102,46 @@ export class SessionService {
     });
   }
 
+  /** Active sessions of a user, newest activity first; `current` = the one holding `currentRaw`. */
+  async list(userId: string, currentRaw?: string) {
+    const currentHash = currentRaw ? hashToken(currentRaw) : null;
+    const rows = await this.prisma.session.findMany({
+      where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: { lastUsedAt: 'desc' },
+      select: { id: true, tokenHash: true, prevTokenHash: true, userAgent: true, createdAt: true, lastUsedAt: true },
+    });
+    return rows.map(({ tokenHash, prevTokenHash, ...r }) => ({
+      ...r,
+      current: currentHash !== null && (tokenHash === currentHash || prevTokenHash === currentHash),
+    }));
+  }
+
+  /** Signs out one device. Scoped to the owner (R5); returns false if nothing was revoked. */
+  async revokeById(userId: string, id: string): Promise<boolean> {
+    const { count } = await this.prisma.session.updateMany({
+      where: { id, userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    return count > 0;
+  }
+
+  /** Signs out every other device, keeping the session that holds `currentRaw`. */
+  async revokeOthers(userId: string, currentRaw: string | undefined): Promise<void> {
+    const hash = currentRaw ? hashToken(currentRaw) : null;
+    // Look the current session up first: a `NOT (… OR prevTokenHash = x)` filter would drop every row
+    // whose prevTokenHash is NULL (SQL three-valued logic) and revoke nothing.
+    const current = hash
+      ? await this.prisma.session.findFirst({
+          where: { userId, OR: [{ tokenHash: hash }, { prevTokenHash: hash }] },
+          select: { id: true },
+        })
+      : null;
+    await this.prisma.session.updateMany({
+      where: { userId, revokedAt: null, ...(current ? { id: { not: current.id } } : {}) },
+      data: { revokedAt: new Date() },
+    });
+  }
+
   /** Revokes all of a user's sessions (password change, logout-all). */
   async revokeAllForUser(userId: string): Promise<void> {
     await this.prisma.session.updateMany({

@@ -104,6 +104,38 @@ export class AuthService {
     return user.id;
   }
 
+  /** Updates personal info. Blank text clears the field; services are trimmed and de-duplicated. */
+  async updateProfile(
+    userId: string,
+    dto: { name?: string; occupation?: string; servicesUsed?: string[]; locale?: string },
+  ) {
+    const text = (v: string | undefined) => (v === undefined ? undefined : v.trim() || null);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: text(dto.name),
+        occupation: text(dto.occupation),
+        servicesUsed: dto.servicesUsed
+          ? [...new Set(dto.servicesUsed.map((x) => x.trim()).filter(Boolean))]
+          : undefined,
+        locale: dto.locale && isSupportedLocale(dto.locale) ? (dto.locale as Locale) : undefined,
+      },
+    });
+    return this.me(userId);
+  }
+
+  /** Changes the password after checking the current one. The caller signs out the other devices. */
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.passwordHash || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      throw new BadRequestException('Mật khẩu hiện tại không đúng / Current password is incorrect');
+    }
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: await bcrypt.hash(newPassword, 10) },
+    });
+  }
+
   /** Short-lived JWT access token (the guard verifies it without touching the DB). */
   signAccessToken(userId: string): string {
     return this.jwt.sign({ sub: userId }, { expiresIn: ACCESS_TTL_SEC });

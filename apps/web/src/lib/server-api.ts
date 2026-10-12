@@ -8,9 +8,11 @@ import type {
   LibraryPage,
   LibraryQuery,
   Me,
+  Progress,
   QuizFilter,
   QuizQuestion,
   QuizSet,
+  TestStatus,
 } from './api';
 
 // Server-side (SSR) fetches — use the internal API URL to render crawlable HTML (SEO).
@@ -81,4 +83,14 @@ export function fetchContestHistoryServer(): Promise<ContestHistory | null> {
 /** A finished contest round with its review. Null if missing, not finished or not yours. */
 export function fetchContestResultServer(locale: 'en' | 'vi', id: string): Promise<ContestResult | null> {
   return getJson<ContestResult>(`/contest/${encodeURIComponent(id)}/result`, { locale });
+}
+
+/** "My progress" (practice + contest). Null when signed out / API error. */
+export function fetchProgressServer(locale: 'en' | 'vi'): Promise<Progress | null> {
+  return getJson<Progress>('/progress', { locale });
+}
+
+/** Email test settings state. Null when signed out / API error. */
+export function fetchTestStatusServer(): Promise<TestStatus | null> {
+  return getJson<TestStatus>('/test');
 }

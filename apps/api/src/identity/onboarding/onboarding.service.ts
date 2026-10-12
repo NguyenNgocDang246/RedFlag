@@ -1,16 +1,15 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Locale, TestFrequency } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  CONFIRMATION_TEXT_VERSION,
-  confirmationMatches,
-  expectedPhrase,
-} from '../confirmation';
+import { TestSettingsService } from '../consent/test-settings.service';
 import { OnboardingDto } from '../dto/onboarding.dto';
 
 @Injectable()
 export class OnboardingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly testSettings: TestSettingsService,
+  ) {}
 
   async submit(userId: string, dto: OnboardingDto) {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
@@ -44,30 +43,12 @@ export class OnboardingService {
 
     // Test flow (independent). Enabling requires the exact confirmation phrase (type-to-confirm).
     if (dto.test.enabled) {
-      if (!confirmationMatches(dto.test.confirmationText, nextLocale)) {
-        throw new BadRequestException({
-          message: 'Câu xác nhận chưa đúng / Confirmation phrase does not match',
-          expectedPhrase: expectedPhrase(nextLocale),
-          locale: nextLocale,
-        });
-      }
-
-      const frequency = (dto.test.frequency as TestFrequency | undefined) ?? TestFrequency.medium;
-      await this.prisma.userTestOptin.upsert({
-        where: { userId },
-        create: { userId, enabled: true, frequency },
-        update: { enabled: true, frequency },
-      });
-
-      await this.prisma.consent.create({
-        data: {
-          userId,
-          type: 'test_flow',
-          textVersion: CONFIRMATION_TEXT_VERSION,
-          locale: nextLocale,
-          confirmationText: dto.test.confirmationText,
-        },
-      });
+      await this.testSettings.enable(
+        userId,
+        nextLocale,
+        dto.test.confirmationText,
+        dto.test.frequency as TestFrequency | undefined,
+      );
     } else {
       await this.prisma.userTestOptin.upsert({
         where: { userId },

@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Swords,
   Target,
+  UserRound,
 } from 'lucide-react';
 import { logout, restoreSession, type Locale, type Me } from '@/lib/api';
 import { NAV_T } from '@/lib/i18n';
@@ -135,6 +136,15 @@ export function SiteHeader({ initialMe }: { initialMe: Me | null }) {
                     <span className={s.avatarLg}>{initial}</span>
                     <span className={s.menuEmail}>{me.email}</span>
                   </div>
+                  <Link
+                    href={`/me${q}`}
+                    role="menuitem"
+                    className={`${s.menuItem} ${s.menuLink}`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <UserRound size={18} aria-hidden />
+                    {t.me}
+                  </Link>
                   <button
                     type="button"
                     role="menuitem"

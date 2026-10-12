@@ -1,6 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { TestFrequency } from '@prisma/client';
+import { Locale, TestFrequency } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CONFIRMATION_TEXT_VERSION, confirmationMatches, expectedPhrase } from '../confirmation';
+
+/** on = tests are sent; paused = consent kept, nothing sent; off = never enabled or unsubscribed. */
+export type TestState = 'on' | 'paused' | 'off';
 
 /**
  * Test flow management after onboarding (R1): pause, resume, unsubscribe.
@@ -18,6 +22,49 @@ export class TestSettingsService {
       );
     }
     return optin;
+  }
+
+  async status(userId: string) {
+    const [optin, consent] = await Promise.all([
+      this.prisma.userTestOptin.findUnique({ where: { userId } }),
+      this.prisma.consent.findFirst({ where: { userId, type: 'test_flow', revokedAt: null } }),
+    ]);
+    const state: TestState = optin?.enabled ? 'on' : consent && optin ? 'paused' : 'off';
+    return { state, frequency: optin && optin.frequency !== TestFrequency.off ? optin.frequency : null };
+  }
+
+  /**
+   * Turns tests on (R1): requires the confirmation phrase retyped exactly (type-to-confirm), and
+   * records a consent with the warning text version + locale. Used by onboarding and the /me page.
+   */
+  async enable(userId: string, locale: Locale, confirmationText: string | undefined, frequency?: TestFrequency) {
+    if (!confirmationMatches(confirmationText, locale)) {
+      throw new BadRequestException({
+        message: 'Câu xác nhận chưa đúng / Confirmation phrase does not match',
+        expectedPhrase: expectedPhrase(locale),
+        locale,
+      });
+    }
+    const freq = frequency && frequency !== TestFrequency.off ? frequency : TestFrequency.medium;
+    await this.prisma.$transaction([
+      this.prisma.userTestOptin.upsert({
+        where: { userId },
+        create: { userId, enabled: true, frequency: freq },
+        update: { enabled: true, frequency: freq },
+      }),
+      this.prisma.consent.create({
+        data: { userId, type: 'test_flow', textVersion: CONFIRMATION_TEXT_VERSION, locale, confirmationText },
+      }),
+    ]);
+    return { enabled: true, frequency: freq };
+  }
+
+  /** Changes how often tests arrive (keeps on/paused as is). */
+  async setFrequency(userId: string, frequency: TestFrequency) {
+    if (frequency === TestFrequency.off) throw new BadRequestException('Use pause or unsubscribe instead');
+    await this.requireOptin(userId);
+    await this.prisma.userTestOptin.update({ where: { userId }, data: { frequency } });
+    return this.status(userId);
   }
 
   async pause(userId: string) {

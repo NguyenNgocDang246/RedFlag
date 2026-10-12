@@ -109,3 +109,19 @@ describe('SessionService.rotate', () => {
     expect(row.tokenHash).toBe(hash('winner'));
   });
 });
+
+describe('SessionService.revokeOthers', () => {
+  it('keeps the current session (looked up by id, not a NULL-unsafe NOT filter)', async () => {
+    const findFirst = vi.fn(async () => ({ id: 'mine' }));
+    const updateMany = vi.fn(async () => ({ count: 2 }));
+    const prisma = { session: { findFirst, updateMany } } as unknown as PrismaService;
+    await new SessionService(prisma).revokeOthers('u1', 'raw');
+    expect(findFirst).toHaveBeenCalledWith({
+      where: { userId: 'u1', OR: [{ tokenHash: hash('raw') }, { prevTokenHash: hash('raw') }] },
+      select: { id: true },
+    });
+    expect(updateMany.mock.calls[0][0]).toMatchObject({
+      where: { userId: 'u1', revokedAt: null, id: { not: 'mine' } },
+    });
+  });
+});
