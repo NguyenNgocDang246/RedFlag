@@ -28,7 +28,8 @@ export class ReportService {
       where: {
         userId,
         status: 'sent',
-        sentAt: { gte: new Date(Date.now() - WINDOW_DAYS * DAY_MS) },
+        // `lte: now` hides one handed to the provider but not delivered yet — it would spoil the test.
+        sentAt: { gte: new Date(Date.now() - WINDOW_DAYS * DAY_MS), lte: new Date() },
       },
       orderBy: { sentAt: 'desc' },
       include: {

@@ -30,11 +30,11 @@ async function authHeaders(): Promise<HeadersInit> {
 async function getJson<T>(path: string, params: Record<string, string | undefined> = {}): Promise<T | null> {
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v) qs.set(k, v);
+  // Outside the try: during `next build`, cookies() throws to mark the page dynamic, and that
+  // signal must reach Next rather than be swallowed as a failed fetch.
+  const headers = await authHeaders();
   try {
-    const res = await fetch(`${SERVER_API_URL}/api${path}?${qs}`, {
-      cache: 'no-store',
-      headers: await authHeaders(),
-    });
+    const res = await fetch(`${SERVER_API_URL}/api${path}?${qs}`, { cache: 'no-store', headers });
     return res.ok ? ((await res.json()) as T) : null;
   } catch {
     return null;

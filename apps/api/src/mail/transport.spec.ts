@@ -41,6 +41,27 @@ describe('ResendTransport', () => {
     });
   });
 
+  it('asks Resend to hold a scheduled message until its delivery time', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ id: 'msg_3' })));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await new ResendTransport('re_key').send({ ...message, scheduledAt: new Date('2026-10-13T09:00:00Z') });
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string).scheduled_at).toBe('2026-10-13T09:00:00.000Z');
+  });
+
+  it('cancels a scheduled message by id', async () => {
+    const fetchMock = vi.fn(async () => new Response('{}'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await new ResendTransport('re_key').cancel('msg_3');
+
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe('https://api.resend.com/emails/msg_3/cancel');
+    expect(init.method).toBe('POST');
+  });
+
   it('retries a rate-limited send, since Resend allows only a couple per second', async () => {
     vi.useFakeTimers();
     const fetchMock = vi

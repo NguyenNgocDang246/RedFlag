@@ -1,5 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Locale, TestFrequency } from '@prisma/client';
+import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CONFIRMATION_TEXT_VERSION, confirmationMatches, expectedPhrase } from '../confirmation';
 
@@ -23,7 +24,12 @@ export type TestState = 'on' | 'paused' | 'off';
  */
 @Injectable()
 export class TestSettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(TestSettingsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mail: MailService,
+  ) {}
 
   private async requireOptin(userId: string) {
     const optin = await this.prisma.userTestOptin.findUnique({ where: { userId } });
@@ -86,6 +92,7 @@ export class TestSettingsService {
       this.prisma.userTestOptin.update({ where: { userId }, data: { frequency } }),
       this.cancelPending(userId),
     ]);
+    await this.recallHandedOff(userId);
     return this.status(userId);
   }
 
@@ -95,6 +102,7 @@ export class TestSettingsService {
       this.prisma.userTestOptin.update({ where: { userId }, data: { enabled: false } }),
       this.cancelPending(userId),
     ]);
+    await this.recallHandedOff(userId);
     return { enabled: false, paused: true };
   }
 
@@ -130,6 +138,7 @@ export class TestSettingsService {
       }),
       this.cancelPending(userId),
     ]);
+    await this.recallHandedOff(userId);
     return { enabled: false, unsubscribed: true };
   }
 
@@ -139,5 +148,32 @@ export class TestSettingsService {
       where: { userId, status: 'scheduled', isTest: false },
       data: { status: 'cancelled' },
     });
+  }
+
+  /**
+   * The daily cron hands tests to the mail provider up to a day before they land. Those are already
+   * `sent` (with `sentAt` in the future), so cancelPending misses them — call them back here so a
+   * pause or unsubscribe still stops everything (R1).
+   */
+  private async recallHandedOff(userId: string) {
+    const waiting = await this.prisma.campaign.findMany({
+      where: { userId, status: 'sent', isTest: false, sentAt: { gt: new Date() } },
+      select: { id: true, delivery: { select: { providerMessageId: true } } },
+    });
+    for (const campaign of waiting) {
+      const messageId = campaign.delivery?.providerMessageId;
+      if (!messageId) continue;
+      try {
+        await this.mail.cancelScheduled(messageId);
+      } catch (e) {
+        // Most likely it went out in the meantime; nothing left to call back.
+        this.logger.warn(`Could not recall campaign ${campaign.id}: ${String(e)}`);
+        continue;
+      }
+      await this.prisma.$transaction([
+        this.prisma.campaign.update({ where: { id: campaign.id }, data: { status: 'cancelled' } }),
+        this.prisma.delivery.update({ where: { campaignId: campaign.id }, data: { status: 'failed' } }),
+      ]);
+    }
   }
 }

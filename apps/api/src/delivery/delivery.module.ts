@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { IdentityModule } from '../identity/identity.module';
+import { CronController } from './cron.controller';
 import { DeliveryConfig } from './delivery.config';
 import { DeliveryService } from './delivery.service';
 import { InboundController } from './inbound.controller';
@@ -16,7 +17,7 @@ import { TrackingService } from './tracking.service';
  */
 @Module({
   imports: [IdentityModule], // JwtAuthGuard for the report routes
-  controllers: [TrackingController, ReportController, InboundController],
+  controllers: [TrackingController, ReportController, InboundController, CronController],
   providers: [DeliveryConfig, SchedulerService, DeliveryService, TrackingService, ReportService, InboundReportService],
   exports: [SchedulerService, DeliveryService],
 })

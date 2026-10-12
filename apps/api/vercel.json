@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm --filter @redflag/shared build && pnpm exec prisma generate && pnpm exec nest build",
+  "outputDirectory": "public",
+  "functions": {
+    "api/index.js": { "maxDuration": 300, "includeFiles": "dist/**" }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "crons": [{ "path": "/api/cron/daily", "schedule": "0 0 * * *" }]
+}

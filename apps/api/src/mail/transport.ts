@@ -11,12 +11,16 @@ export interface MailMessage {
   headers?: Record<string, string>;
   /** Resend only: makes a retried send land once. */
   idempotencyKey?: string;
+  /** Resend only: hand the message over now, have it delivered at this time. */
+  scheduledAt?: Date;
 }
 
 /** Sends a message and returns the provider's id, for matching bounces later. */
 export interface MailTransport {
   readonly name: string;
   send(msg: MailMessage): Promise<string | undefined>;
+  /** Calls back a message handed over with `scheduledAt` that has not gone out yet. */
+  cancel(messageId: string): Promise<void>;
 }
 
 /** Dev: Mailpit on localhost:1025. Also any plain SMTP provider (incl. Resend's SMTP interface). */
@@ -46,6 +50,9 @@ export class SmtpTransport implements MailTransport {
     })) as { messageId?: string };
     return info.messageId;
   }
+
+  /** SMTP sends right away, so there is never anything waiting to call back. */
+  async cancel(): Promise<void> {}
 }
 
 const RESEND_URL = process.env.RESEND_API_URL ?? 'https://api.resend.com/emails';
@@ -72,6 +79,7 @@ export class ResendTransport implements MailTransport {
       html: msg.html,
       ...(msg.text ? { text: msg.text } : {}),
       ...(msg.headers ? { headers: msg.headers } : {}),
+      ...(msg.scheduledAt ? { scheduled_at: msg.scheduledAt.toISOString() } : {}),
     });
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,
@@ -93,6 +101,17 @@ export class ResendTransport implements MailTransport {
       }
       this.logger.warn(`Resend ${res.status}, retrying in ${RETRY_DELAYS_MS[attempt]}ms`);
       await sleep(RETRY_DELAYS_MS[attempt]);
+    }
+  }
+
+  async cancel(messageId: string): Promise<void> {
+    const res = await fetch(`${RESEND_URL}/${encodeURIComponent(messageId)}/cancel`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${this.apiKey}` },
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      throw new Error(`Resend could not cancel ${messageId} (${res.status}): ${detail.slice(0, 300)}`);
     }
   }
 }

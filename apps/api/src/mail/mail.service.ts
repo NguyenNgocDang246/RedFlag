@@ -49,6 +49,8 @@ export class MailService {
     text: string;
     /** Resend: makes a retried send of the same campaign land once. */
     idempotencyKey?: string;
+    /** Resend: deliver at this time instead of now. */
+    scheduledAt?: Date;
   }): Promise<string | undefined> {
     const from = args.senderName.trim()
       ? `"${args.senderName.replace(/"/g, '')}" <${this.fromAddress}>`
@@ -61,8 +63,19 @@ export class MailService {
       text: args.text,
       headers: SIM_EMAIL_HEADERS,
       idempotencyKey: args.idempotencyKey,
+      scheduledAt: args.scheduledAt,
     });
-    this.logger.log(`Sent simulation "${args.subject}" to ${args.to}`);
+    this.logger.log(
+      args.scheduledAt
+        ? `Scheduled simulation "${args.subject}" to ${args.to} at ${args.scheduledAt.toISOString()}`
+        : `Sent simulation "${args.subject}" to ${args.to}`,
+    );
     return id;
+  }
+
+  /** Calls back a simulation handed over with `scheduledAt` (pause / unsubscribe before it lands). */
+  async cancelScheduled(messageId: string): Promise<void> {
+    await this.transport.cancel(messageId);
+    this.logger.log(`Cancelled scheduled simulation ${messageId}`);
   }
 }
