@@ -12,6 +12,7 @@ import {
   type SignalOption,
 } from '@/lib/api';
 import { REPORT_T } from '@/lib/i18n';
+import { formatDate } from '@/lib/text';
 import s from './report.module.css';
 
 /** Which email is in the "which sign gave it away?" step, and the choices for it. */
@@ -87,10 +88,7 @@ export function ReportList({ locale }: { locale: Locale }) {
     }
   };
 
-  const date = (iso: string) =>
-    new Date(iso).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', {
-      dateStyle: 'medium',
-    });
+  const date = (iso: string) => formatDate(iso, locale);
 
   if (items === null) {
     return (

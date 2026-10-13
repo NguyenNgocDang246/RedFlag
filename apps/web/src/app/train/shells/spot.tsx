@@ -39,13 +39,14 @@ export const signalOfKey = (key: string) => {
   return i === -1 ? key : key.slice(0, i);
 };
 
-/** Distinct signals to submit, from the selected keys (plain text has no signal and is skipped). */
+/** Distinct signals to submit, from the selected keys. */
 export const signalsOf = (keys: string[]) => [...new Set(keys.map(signalOfKey).filter(Boolean))];
 
 /**
- * A piece of content in a shell. Correct hotspots, decoys and plain text are all selectable and react
+ * A piece of content in a shell. Only hotspots (red flags and decoys) are selectable, and they react
  * EXACTLY the same (hover and tap) — the UI doesn't know right from wrong; colors only appear after grading.
- * Plain text carries no signal so it's not submitted; if selected, it shows as a wrong pick after grading.
+ * Plain text is just text: no hover, no tap. Decoys sit where red flags usually appear (sender, URL, link,
+ * attachment…), so being clickable says nothing about being a red flag.
  * `render` lets a skin format the text itself (e.g. split domain/path in the address bar).
  */
 export function Spot({ span, render }: { span: Span; render?: (text: string) => ReactNode }) {
@@ -53,15 +54,17 @@ export function Spot({ span, render }: { span: Span; render?: (text: string) => 
 
   const text = typeof span === 'string' ? span : span.text;
   const code = isHotspot(span) ? span.signal : null;
+  if (!code) return <span className={s.spot}>{render ? render(text) : text}</span>;
+
   const href = isHotspot(span) ? span.href : undefined;
-  const key = spotKey(code ?? '', text);
+  const key = spotKey(code, text);
   const picked = selected.includes(key);
 
   let state = '';
   if (reveal) {
-    if (code && reveal.matched.includes(code)) state = s.matched;
-    else if (code && reveal.missed.includes(code)) state = s.missed;
-    else if (picked) state = s.wrong; // selected decoy or plain text = wrong pick
+    if (reveal.matched.includes(code)) state = s.matched;
+    else if (reveal.missed.includes(code)) state = s.missed;
+    else if (picked) state = s.wrong; // selected decoy = wrong pick
   } else if (picked) {
     state = s.picked;
   }

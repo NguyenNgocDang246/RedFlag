@@ -4,6 +4,7 @@ import { ArrowRight, CircleCheck, History, LogIn, Swords } from 'lucide-react';
 import { IconHeading } from '@/components/icon-heading';
 import type { Locale } from '@/lib/api';
 import { CONTEST_T } from '@/lib/i18n';
+import { formatDate } from '@/lib/text';
 import { fetchContestHistoryServer, fetchMeServer } from '@/lib/server-api';
 import { CONTEST_ITEM_SECONDS, CONTEST_SIZE } from '@redflag/shared';
 import { StartButton } from './start-button';
@@ -25,11 +26,7 @@ export default async function ContestPage({ searchParams }: Search) {
   const me = await fetchMeServer();
   const history = me ? await fetchContestHistoryServer() : null;
   const ruleArgs = [CONTEST_SIZE, CONTEST_ITEM_SECONDS, 0, 0];
-  const date = (iso: string) =>
-    new Date(iso).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
+  const date = (iso: string) => formatDate(iso, locale, true);
 
   return (
     <main className={s.main}>

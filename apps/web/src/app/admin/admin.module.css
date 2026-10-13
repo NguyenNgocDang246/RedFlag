@@ -7,6 +7,8 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
+  /* Rows hug their content; without this a short page stretches them and pushes content down. */
+  align-content: start;
   gap: 32px;
   padding: 24px;
 }
@@ -61,7 +63,8 @@
   .shell {
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
-    padding: 16px;
+    /* Side gutters follow the header (24px, 16px on phones) so the edges line up. */
+    padding: 16px 24px;
   }
   .side {
     position: static;
@@ -70,8 +73,8 @@
   .sideNav {
     flex-direction: row;
     gap: 4px;
-    margin: 0 -16px;
-    padding: 0 16px 4px;
+    margin: 0 -24px;
+    padding: 0 24px 4px;
     overflow-x: auto;
     scrollbar-width: none;
   }
@@ -87,6 +90,13 @@
   }
 }
 @media (max-width: 640px) {
+  .shell {
+    padding: 16px;
+  }
+  .sideNav {
+    margin: 0 -16px;
+    padding: 0 16px 4px;
+  }
   .sideIcon {
     display: none;
   }

@@ -53,7 +53,7 @@ export function RegisterForm({ locale, google }: { locale: Locale; google: boole
   }
 
   return (
-    <AuthCard icon={<UserPlus size={26} />} title={t.registerTitle} sub={t.registerSub}>
+    <AuthCard icon={<UserPlus size={26} />} title={t.registerTitle}>
       {google && <GoogleButton locale={locale} />}
       <form onSubmit={submit} noValidate>
         {error && (

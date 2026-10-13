@@ -17,16 +17,15 @@ export const RULE_MSG = {
       `hotspot mồi thiếu giải thích vì sao bình thường: ${q(t)}`,
     correctNoNote: (t: string[]) =>
       `hotspot đúng thiếu giải thích vì sao đáng ngờ: ${q(t)}`,
-    needDecoy: 'cần ít nhất 1 hotspot mồi (chỗ trông đáng ngờ nhưng bình thường)',
     noteTooShort: (min: number, t: string[]) =>
       `giải thích hotspot quá ngắn (<${min} ký tự): ${q(t)}`,
     noteDuplicate: (t: string[]) =>
       `giải thích hotspot bị trùng nguyên văn trong cùng bài: ${q(t)}`,
-    hintNoDecoy: 'chưa có hotspot mồi — bắt buộc ít nhất 1',
+    needDecoy:
+      'bài lừa cần ít nhất 1 hotspot mồi đặt ở chỗ hay có dấu hiệu (người gửi, URL, link, tệp, số điện thoại…)',
+    hintNoDecoy: 'chưa có hotspot mồi',
     hintUnbalanced: (decoys: number, correct: number) =>
       `số mồi (${decoys}) lệch nhiều so với số hotspot đúng (${correct}) — chỉ là gợi ý`,
-    hintSingle:
-      'mỗi signal đáp án chỉ có 1 hotspot — cân nhắc thêm chỗ thứ hai nếu hợp lý',
     missing: (k: string) => `thiếu "${k}"`,
     invalid: (k: string) => `"${k}" không hợp lệ`,
     minLines: (k: string, min: number) => `"${k}" cần ít nhất ${min} dòng`,
@@ -52,16 +51,15 @@ export const RULE_MSG = {
     decoyNoNote: (t: string[]) => `decoy hotspot is missing why it is normal: ${q(t)}`,
     correctNoNote: (t: string[]) =>
       `correct hotspot is missing why it is suspicious: ${q(t)}`,
-    needDecoy: 'needs at least 1 decoy hotspot (looks suspicious but is normal)',
     noteTooShort: (min: number, t: string[]) =>
       `hotspot explanation too short (<${min} characters): ${q(t)}`,
     noteDuplicate: (t: string[]) =>
       `hotspot explanation repeated word-for-word in this quiz: ${q(t)}`,
-    hintNoDecoy: 'no decoy hotspot yet — at least 1 is required',
+    needDecoy:
+      'a scam quiz needs at least 1 decoy hotspot where red flags usually appear (sender, URL, link, file, phone number…)',
+    hintNoDecoy: 'no decoy hotspot yet',
     hintUnbalanced: (decoys: number, correct: number) =>
       `decoys (${decoys}) are far from correct hotspots (${correct}) — just a suggestion`,
-    hintSingle:
-      'each answer signal has only 1 hotspot — consider a second one where it makes sense',
     missing: (k: string) => `missing "${k}"`,
     invalid: (k: string) => `"${k}" is invalid`,
     minLines: (k: string, min: number) => `"${k}" needs at least ${min} line(s)`,
@@ -195,7 +193,8 @@ export function stripNotes<T>(node: T): T {
 
 /**
  * - Scam: needs answer signals, and every answer signal has a hotspot.
- * - At least 1 decoy is REQUIRED (more is a suggestion — see hotspotHints).
+ * - Only hotspots are clickable, so a scam needs at least 1 decoy (else "tap everything" always wins); about as many
+ *   decoys as correct hotspots is a suggestion (hotspotHints). A safe quiz may have none.
  * - Every hotspot needs a `note` written for THIS scenario (never shared between quizzes): decoys say why it is
  *   normal, correct ones say what the scammer is doing here and why it is a warning sign.
  */
@@ -268,7 +267,7 @@ export function checkQuizHotspots(
   );
   if (noCorrectNote.length)
     errors.push(m.correctNoNote(noCorrectNote.map((d) => d.text)));
-  if (spots.length === correct.length) errors.push(m.needDecoy);
+  if (args.isScam && spots.length === correct.length) errors.push(m.needDecoy);
   const notes = collectNotes(args.scenarioData);
   const tooShort = notes.filter((n) => n.length < MIN_NOTE_LENGTH);
   if (tooShort.length)
@@ -295,12 +294,6 @@ export function hotspotHints(
   const { correct, decoys } = countHotspots(args.scenarioData, args.signalCodes);
   if (decoys === 0) hints.push(m.hintNoDecoy);
   else if (Math.abs(correct - decoys) > 1) hints.push(m.hintUnbalanced(decoys, correct));
-  const perSignal = new Map<string, number>();
-  for (const sig of collectHotspots(args.scenarioData).values())
-    if (args.signalCodes.includes(sig)) perSignal.set(sig, (perSignal.get(sig) ?? 0) + 1);
-  const single = args.signalCodes.filter((c) => perSignal.get(c) === 1);
-  if (single.length > 1 && single.length === args.signalCodes.length)
-    hints.push(m.hintSingle);
   return hints;
 }
 

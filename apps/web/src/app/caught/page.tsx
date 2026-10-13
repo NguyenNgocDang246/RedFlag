@@ -31,12 +31,14 @@ export default async function CaughtPage({ searchParams }: Search) {
   if (!content) {
     return (
       <div className={`theme-caught ${s.wrap}`}>
-        <main className={s.main}>
-          <h1 className={s.title}>{t.goneTitle}</h1>
-          <p className={s.safe}>{t.goneBody}</p>
-          <Link href={`/?locale=${locale}`} className="btn btn-primary">
-            {t.goneCta}
-          </Link>
+        <main className={`${s.main} ${s.gone}`}>
+          <header className={s.head}>
+            <h1 className={s.title}>{t.goneTitle}</h1>
+            <p className={s.safe}>{t.goneBody}</p>
+            <Link href={`/?locale=${locale}`} className={`btn btn-primary ${s.goneCta}`}>
+              {t.goneCta}
+            </Link>
+          </header>
         </main>
       </div>
     );

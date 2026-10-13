@@ -39,7 +39,7 @@ describe('checkQuizHotspots', () => {
     ).toEqual([]);
   });
 
-  it('bắt buộc có ít nhất 1 mồi — bài lừa không mồi bị chặn', () => {
+  it('bài lừa không có mồi bị chặn (chỉ hotspot mới chạm được)', () => {
     const data = sms([['khoá trong 24h', 'URGENCY']]);
     expect(
       checkQuizHotspots({
@@ -50,10 +50,10 @@ describe('checkQuizHotspots', () => {
     ).toMatch(/ít nhất 1 hotspot mồi/);
   });
 
-  it('bài an toàn không có hotspot nào bị chặn, có mồi thì hợp lệ', () => {
+  it('bài an toàn không cần mồi: không có hotspot nào vẫn hợp lệ, có mồi cũng hợp lệ', () => {
     expect(
-      checkQuizHotspots({ isScam: false, signalCodes: [], scenarioData: sms([]) }).join(),
-    ).toMatch(/ít nhất 1 hotspot mồi/);
+      checkQuizHotspots({ isScam: false, signalCodes: [], scenarioData: sms([]) }),
+    ).toEqual([]);
     expect(
       checkQuizHotspots({
         isScam: false,
@@ -326,8 +326,8 @@ describe('normalizeNote', () => {
 
 describe('rule modes', () => {
   it('basic (admin UI) keeps what a quiz needs, drops authoring-quality rules (data CLI)', () => {
-    // Answer hotspot without a note, no decoy: fails the quality rules, still a working quiz.
-    const data = sms([['khoá trong 24h', 'URGENCY']]);
+    // Answer hotspot without a note: fails the quality rules, still a working quiz.
+    const data = { messages: [{ text: 'khoá trong 24h', signal: 'URGENCY' }] };
     const full = checkQuizHotspots({
       isScam: true,
       signalCodes: ['URGENCY'],

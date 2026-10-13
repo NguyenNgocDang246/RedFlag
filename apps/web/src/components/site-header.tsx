@@ -34,6 +34,8 @@ export function useLocale(): Locale {
  */
 const BARE_ROUTES = ['/caught'];
 const isBareRoute = (pathname: string) => BARE_ROUTES.some((r) => pathname.startsWith(r));
+/** Admin uses a wider frame; header and footer widen with it so their edges line up. */
+const isWideRoute = (pathname: string) => pathname.startsWith('/admin');
 
 export function SiteHeader({ initialMe }: { initialMe: Me | null }) {
   const locale = useLocale();
@@ -82,12 +84,14 @@ export function SiteHeader({ initialMe }: { initialMe: Me | null }) {
     router.refresh();
   };
   const initial = me ? (me.name || me.email).charAt(0).toUpperCase() : '';
+  // Break a long email before the "@" rather than mid-word.
+  const at = me ? me.email.indexOf('@') : -1;
 
   if (isBareRoute(pathname)) return null;
 
   return (
     <header className={s.header}>
-      <div className={s.inner}>
+      <div className={`${s.inner} ${isWideRoute(pathname) ? s.wide : ''}`}>
         <Link href={`/${q}`} className={s.brand} aria-label="RedFlag">
           <Logo />
         </Link>
@@ -143,7 +147,17 @@ export function SiteHeader({ initialMe }: { initialMe: Me | null }) {
                 <div className={s.menu} role="menu">
                   <div className={s.menuHead}>
                     <span className={s.avatarLg}>{initial}</span>
-                    <span className={s.menuEmail}>{me.email}</span>
+                    <span className={s.menuEmail} title={me.email}>
+                      {at > 0 ? (
+                        <>
+                          {me.email.slice(0, at)}
+                          <wbr />
+                          {me.email.slice(at)}
+                        </>
+                      ) : (
+                        me.email
+                      )}
+                    </span>
                   </div>
                   <Link
                     href={`/me${q}`}
@@ -193,7 +207,7 @@ export function SiteFooter({ me }: { me: Me | null }) {
   const q = `?locale=${locale}`;
   return (
     <footer className={s.footer}>
-      <div className={s.footInner}>
+      <div className={`${s.footInner} ${isWideRoute(pathname) ? s.wide : ''}`}>
         <span className={s.footBrand}>
           <Logo />
           <span className={s.copy}>© {new Date().getFullYear()}</span>

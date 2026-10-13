@@ -58,22 +58,30 @@
   font-size: 16px;
   color: var(--fg);
 }
-.selects {
+/* Filters share one row in equal columns (wrapping only on narrow screens). */
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+/* Result count + reset on the left, sort on the right. */
+.toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-top: 4px;
 }
-/* Filters fill the space before the sort group in equal columns; a wrapped filter keeps a normal width. */
-.filterGrid {
-  flex: 1 1 480px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
-  gap: 8px;
+.toolbarStart {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-width: 0;
 }
 .sortGroup {
   display: inline-flex;
-  align-self: flex-start;
   align-items: center;
   gap: 4px;
   margin-left: auto;
@@ -98,8 +106,10 @@
   width: 40px;
 }
 .reset {
+  height: 32px;
   padding: 0 12px;
   border-style: dashed;
+  font-size: 13.5px;
 }
 .dirBtn:hover,
 .reset:hover {
@@ -107,12 +117,13 @@
   color: var(--fg);
 }
 
-/* ── Table ── */
 .total {
-  margin: 0 0 8px;
   font-size: 14px;
+  font-weight: 600;
   color: var(--muted);
 }
+
+/* ── Table ── */
 .table {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -261,13 +272,13 @@ a.row:focus-visible {
   .main {
     padding: 24px 16px 0;
   }
-  /* Full width like the filters above it: the sort select takes the row, the direction button stays square. */
-  .sortGroup {
-    width: 100%;
-    margin-left: 0;
+  /* Two compact columns instead of one tall stack of full-width filters. */
+  .filterGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .sortGroup .select {
-    flex: 1;
+  /* An odd last filter takes the whole row rather than half of it. */
+  .filterGrid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
   /* Narrow screens: each row becomes a two-line card. */
   .headRow {

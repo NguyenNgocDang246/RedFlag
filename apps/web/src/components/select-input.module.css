@@ -1,4 +1,4 @@
-/* Shared select. The native control fills the wrapper; the chevron is drawn on top (clicks pass through). */
+/* Shared select. The trigger button fills the wrapper; the chevron is drawn on top (clicks pass through). */
 .wrap {
   position: relative;
   display: inline-flex;
@@ -8,21 +8,27 @@
   vertical-align: middle;
 }
 .select {
+  display: flex;
+  align-items: center;
   width: 100%;
   min-width: 0;
-  appearance: none;
-  -webkit-appearance: none;
   margin: 0;
   font: inherit;
+  text-align: left;
   color: var(--fg);
   background: var(--card);
   border: 1px solid var(--line-strong);
-  text-overflow: ellipsis;
   cursor: pointer;
   transition:
     border-color 0.15s,
     box-shadow 0.15s,
     background-color 0.15s;
+}
+.value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .select:hover {
   border-color: var(--muted);
@@ -30,7 +36,8 @@
 .select:focus {
   outline: none;
 }
-.select:focus-visible {
+.select:focus-visible,
+.open .select {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
 }
@@ -39,6 +46,10 @@
   right: 10px;
   color: var(--muted);
   pointer-events: none;
+  transition: transform 0.15s;
+}
+.open .chevron {
+  transform: rotate(180deg);
 }
 
 /* ── Sizes ── */
@@ -80,7 +91,6 @@
 .fit .select {
   width: auto;
   max-width: 260px;
-  field-sizing: content;
 }
 
 /* ── States ── */
@@ -110,6 +120,72 @@
   opacity: 0.5;
 }
 
+/* ── Dropdown list (rendered in <body>, positioned against the trigger) ── */
+.list {
+  position: fixed;
+  z-index: 100;
+  max-width: min(360px, calc(100vw - 16px));
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: var(--shadow-lg);
+  animation: pop 0.12s ease-out;
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  color: var(--fg);
+  cursor: pointer;
+  user-select: none;
+}
+.list_md .option {
+  font-size: 14px;
+}
+.list_sm .option {
+  min-height: 32px;
+  padding: 6px 9px;
+  font-size: 13.5px;
+}
+.optionLabel {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.optionCursor {
+  background: var(--bg-soft);
+}
+.optionSelected {
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+.optionSelected.optionCursor {
+  background: var(--accent-soft);
+}
+.optionDisabled {
+  color: var(--muted);
+  cursor: default;
+  opacity: 0.6;
+}
+.check {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
 /* ── Optional label ── */
 .labelled {
   display: inline-flex;
@@ -136,11 +212,10 @@
 }
 
 @media (max-width: 640px) {
-  /* 16px stops iOS from zooming into the page when the select is tapped. */
-  .select,
-  .sm .select,
-  .md .select {
-    font-size: 16px;
+  /* Bigger touch targets in the list on phones. */
+  .list .option {
+    min-height: 44px;
+    font-size: 15px;
   }
   /* Phones: filters take the full row, so stretch "fit" selects too. */
   .fit,

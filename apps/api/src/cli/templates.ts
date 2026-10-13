@@ -20,15 +20,15 @@ export const PROMPT = {
   },
   qr: {
     en: 'Safe or scam? Scanning reveals this address — tap anything suspicious.',
-    vi: 'An toàn hay lừa đảo? Quét ra địa chỉ này — chạm vào chỗ đáng ngờ.',
+    vi: 'An toàn hay lừa đảo? Quét ra địa chỉ này. Chạm vào chỗ đáng ngờ.',
   },
   app: {
     en: 'Safe or scam? An app asks for these permissions — tap anything suspicious.',
-    vi: 'An toàn hay lừa đảo? Một app xin các quyền này — chạm vào chỗ đáng ngờ.',
+    vi: 'An toàn hay lừa đảo? Một app xin các quyền này. Chạm vào chỗ đáng ngờ.',
   },
   file: {
     en: 'Safe or scam? You opened this attachment — tap anything suspicious.',
-    vi: 'An toàn hay lừa đảo? Bạn vừa mở tệp đính kèm này — chạm vào chỗ đáng ngờ.',
+    vi: 'An toàn hay lừa đảo? Bạn vừa mở tệp đính kèm này. Chạm vào chỗ đáng ngờ.',
   },
 } as const;
 
@@ -60,7 +60,7 @@ const decoy = (text: string, signal: string) => ({
 /**
  * `scenarioData` skeleton per shell kind. The sample is a SCAM:
  * the URGENCY spot is CORRECT (in signalCodes), the rest are DECOYS.
- * Replace <…> with real content. At least 1 decoy is required; every hotspot (correct or decoy) needs its own note.
+ * Replace <…> with real content. A scam needs at least 1 decoy (about as many as correct hotspots), placed where red flags usually appear; every hotspot needs its own note.
  * Full rules: docs/quiz-authoring.md.
  */
 function scenario(kind: string): Record<string, unknown> {
@@ -70,20 +70,20 @@ function scenario(kind: string): Record<string, unknown> {
         senderName: decoy('<Tên hiển thị người gửi>', S.SENDER_MISMATCH),
         senderAddress: '<dia-chi@ten-mien.com>',
         subject: '<Tiêu đề email>',
-        body: ['<Lời chào>', spot('<Câu hối thúc — chỗ ĐÚNG>', S.URGENCY), '<Đoạn thường>'],
+        body: ['<Lời chào>', spot('<Câu hối thúc (chỗ ĐÚNG)>', S.URGENCY), '<Đoạn thường>'],
         attachments: [],
       };
     case QuizKind.SMS_INSPECTION:
       return {
         sender: decoy('<BRANDNAME>', S.SENDER_MISMATCH),
-        messages: [spot('<Câu hối thúc — chỗ ĐÚNG>', S.URGENCY), '<Câu thường>'],
+        messages: [spot('<Câu hối thúc (chỗ ĐÚNG)>', S.URGENCY), '<Câu thường>'],
       };
     case QuizKind.CHAT_INSPECTION:
       return {
         contactName: decoy('<Tên liên hệ>', S.SENDER_MISMATCH),
         bubbles: [
           { from: 'them', text: '<Tin mở đầu>' },
-          { from: 'them', text: spot('<Tin hối thúc — chỗ ĐÚNG>', S.URGENCY) },
+          { from: 'them', text: spot('<Tin hối thúc (chỗ ĐÚNG)>', S.URGENCY) },
           { from: 'me', text: '<Tin trả lời của bạn>' },
         ],
       };
@@ -91,26 +91,26 @@ function scenario(kind: string): Record<string, unknown> {
       return {
         urlBar: decoy('https://<ten-mien>/<duong-dan>', S.LOOKALIKE_DOMAIN),
         title: '<Tiêu đề tab>',
-        body: ['<Nội dung trang>', spot('<Câu hối thúc — chỗ ĐÚNG>', S.URGENCY)],
+        body: ['<Nội dung trang>', spot('<Câu hối thúc (chỗ ĐÚNG)>', S.URGENCY)],
         buttons: ['<Nút bấm>'],
       };
     case QuizKind.QR_INSPECTION:
       return {
-        posterText: spot('<Chữ trên poster — chỗ ĐÚNG>', S.URGENCY),
+        posterText: spot('<Chữ trên poster (chỗ ĐÚNG)>', S.URGENCY),
         decodedUrl: decoy('https://<ten-mien>/<duong-dan>', S.LOOKALIKE_DOMAIN),
       };
     case QuizKind.FILE_INSPECTION:
       return {
         fileName: decoy('<ten_tep.docx>', S.SUSPICIOUS_ATTACHMENT),
         prompt: '<Chữ trên nút, vd. Bật nội dung>',
-        body: [spot('<Câu hối thúc — chỗ ĐÚNG>', S.URGENCY), '<Nội dung tệp>'],
+        body: [spot('<Câu hối thúc (chỗ ĐÚNG)>', S.URGENCY), '<Nội dung tệp>'],
       };
     case QuizKind.APP_CONSENT:
     case QuizKind.OAUTH_CONSENT:
       return {
         appName: decoy('<Tên app>', S.TOO_GOOD),
         publisher: '<Nhà phát hành>',
-        permissions: [spot('<Quyền đòi gấp — chỗ ĐÚNG>', S.URGENCY), '<Quyền bình thường>'],
+        permissions: [spot('<Quyền đòi gấp (chỗ ĐÚNG)>', S.URGENCY), '<Quyền bình thường>'],
       };
     default:
       throw new Error(`Loại vỏ không hỗ trợ: ${kind}`);
@@ -126,7 +126,7 @@ export function quizTemplate(kind: string) {
   const group = PROMPT_OF[kind];
   if (!group) throw new Error(`Loại vỏ không hỗ trợ: ${kind}`);
   const text = (locale: 'en' | 'vi') => ({
-    title: locale === 'vi' ? '<Tiêu đề trung tính — không lộ đáp án>' : '<Neutral title — no spoilers>',
+    title: locale === 'vi' ? '<Tiêu đề trung tính, không lộ đáp án>' : '<Neutral title — no spoilers>',
     prompt: PROMPT[group][locale],
     scenario: '',
     explanation:

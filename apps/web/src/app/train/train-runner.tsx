@@ -286,7 +286,8 @@ function Summary({
 }) {
   const t = TRAIN_T[locale];
   const skipped = questions.length - answered;
-  const ratio = answered ? correct / answered : 0;
+  // Score against the whole round: a skipped scenario counts as not correct.
+  const ratio = questions.length ? correct / questions.length : 0;
 
   return (
     <section className={`${s.card} ${s.summary}`}>
@@ -298,11 +299,11 @@ function Summary({
         <div className={s.summaryText}>
           <h2 className={s.summaryTitle}>
             {t.summaryTitle}{' '}
-            {answered > 0 && <span className={s.summaryScore}>{t.summaryScore(correct, answered)}</span>}
+            {answered > 0 && <span className={s.summaryScore}>{t.summaryScore(correct, questions.length)}</span>}
           </h2>
           <p className={s.summaryNote}>
             {/* Nothing answered → no score/praise, just the skipped count. */}
-            {answered > 0 && (ratio >= 0.7 ? t.great : t.good)}
+            {answered > 0 && (ratio === 1 ? t.perfect : ratio >= 0.7 ? t.great : t.good)}
             {skipped > 0 && `${answered > 0 ? ' ' : ''}${t.summarySkipped(skipped)}`}
           </p>
         </div>

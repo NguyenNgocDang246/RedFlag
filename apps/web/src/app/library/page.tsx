@@ -81,6 +81,7 @@ export default async function LibraryPage({ searchParams }: Search) {
         query={query}
         facets={facets}
         showStatus={showStatus}
+        total={page && page.items.length > 0 ? t.total(page.total) : undefined}
       />
 
       {!page ? (
@@ -89,7 +90,6 @@ export default async function LibraryPage({ searchParams }: Search) {
         <p className={s.empty}>{t.empty}</p>
       ) : (
         <>
-          <p className={s.total}>{t.total(page.total)}</p>
           <div className={s.table} role="table" aria-label={t.title}>
             <div className={`${s.row} ${s.headRow}`} role="row">
               <span role="columnheader" className={s.cNum}>
