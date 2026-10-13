@@ -15,6 +15,13 @@
   text-align: center;
   margin-bottom: 36px;
 }
+/* Expired / unknown link: a short centred message, a little below the top of the screen. */
+.gone {
+  padding-top: 14vh;
+}
+.goneCta {
+  margin-top: 28px;
+}
 .badge {
   display: inline-flex;
   width: 76px;

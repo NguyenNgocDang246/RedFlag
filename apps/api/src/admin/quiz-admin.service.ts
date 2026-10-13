@@ -314,7 +314,7 @@ export class QuizAdminService {
       throw new ConflictException(
         ui === 'en'
           ? `This quiz has ${attempts} attempt(s) — unpublish it instead of deleting`
-          : `Bài đã có ${attempts} lượt làm — hãy gỡ xuất bản thay vì xoá`,
+          : `Bài đã có ${attempts} lượt làm, hãy gỡ xuất bản thay vì xoá`,
       );
     }
     await this.prisma.$transaction(async (tx) => {

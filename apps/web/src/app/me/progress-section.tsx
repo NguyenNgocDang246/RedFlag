@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, CircleAlert, Target, TrendingUp } from 'lucide-react';
 import type { Locale, Progress } from '@/lib/api';
 import { CONTEST_T, ME_T } from '@/lib/i18n';
+import { formatDate } from '@/lib/text';
 import s from './me.module.css';
 
 /** Most-missed signs shown. */
@@ -17,12 +18,7 @@ export function ProgressSection({
 }) {
   const t = ME_T[locale];
   const tc = CONTEST_T[locale];
-  const date = (iso: string | null) =>
-    iso
-      ? new Date(iso).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', {
-          dateStyle: 'medium',
-        })
-      : '';
+  const date = (iso: string | null) => (iso ? formatDate(iso, locale) : '');
 
   if (!p || p.answered === 0) {
     return (

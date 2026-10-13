@@ -120,7 +120,7 @@ export class TaxonomyService {
     ]);
     if (quiz + templates > 0) {
       throw new ConflictException(
-        `Chủ đề đang được dùng (${quiz} bài, ${templates} template) — gỡ trước khi xoá / Category in use (${quiz} quizzes, ${templates} templates) — detach it first`,
+        `Chủ đề đang được dùng (${quiz} bài, ${templates} template), cần gỡ ra trước khi xoá / Category in use (${quiz} quizzes, ${templates} templates) — detach it first`,
       );
     }
     await this.prisma.$transaction(async (tx) => {
@@ -243,7 +243,7 @@ export class TaxonomyService {
     ]);
     if (quiz + variants + hotspots > 0) {
       throw new ConflictException(
-        `Dấu hiệu đang được dùng (${quiz} đáp án, ${hotspots} bài có hotspot, ${variants} variant) — gỡ trước khi xoá / Signal in use (${quiz} answers, ${hotspots} quizzes with hotspots, ${variants} variants) — detach it first`,
+        `Dấu hiệu đang được dùng (${quiz} đáp án, ${hotspots} bài có hotspot, ${variants} variant), cần gỡ ra trước khi xoá / Signal in use (${quiz} answers, ${hotspots} quizzes with hotspots, ${variants} variants) — detach it first`,
       );
     }
     await this.prisma.$transaction(async (tx) => {

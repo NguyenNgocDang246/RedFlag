@@ -6,6 +6,8 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
+  /* Rows hug their content; without this a short page stretches them and pushes content down. */
+  align-content: start;
   gap: 32px;
   padding: 32px 24px 56px;
 }
@@ -363,17 +365,32 @@ a.row:hover {
   }
 }
 .kv {
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 12px 20px;
   margin: 0;
 }
 .kv dt {
   color: var(--muted);
 }
 .kv dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   font-weight: 600;
   overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  .kv {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .kv dd + dt {
+    margin-top: 10px;
+  }
 }
 
 /* Email tests */
@@ -553,5 +570,26 @@ a.row:hover {
   .weakLink {
     grid-area: 2 / 2;
     justify-self: end;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 20px 16px;
+  }
+  .row {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+  /* The text says enough on a phone; the icon only costs width. */
+  .rowIcon {
+    display: none;
+  }
+  /* A long action (e.g. "sign out of every other device") takes the full width and may wrap. */
+  .actions > :global(.btn) {
+    width: 100%;
+    padding-inline: 14px;
+    font-size: 15px;
+    white-space: normal;
   }
 }

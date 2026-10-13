@@ -43,7 +43,7 @@ const CONTENT_PH: Record<Locale, { prompt: string; explanation: string }> = {
   vi: {
     prompt: 'VD: An toàn hay lừa đảo? Đọc tin nhắn này rồi chạm vào chỗ đáng ngờ.',
     explanation:
-      'VD: Sao Mai Bank không bao giờ yêu cầu đăng nhập qua link trong tin nhắn. Trang thật là saomaibank.vn — hãy mở app hoặc tự gõ địa chỉ.',
+      'VD: Sao Mai Bank không bao giờ yêu cầu đăng nhập qua link trong tin nhắn. Trang thật là saomaibank.vn, hãy mở app hoặc tự gõ địa chỉ.',
   },
 };
 

@@ -226,10 +226,6 @@ function ResultPanel({
   const pickedDecoys = (result.decoySpots ?? []).filter((d) => d.note && selected.includes(spotKey(d.signal, d.text)));
   const wrongItems: Item[] = [
     ...pickedDecoys.map((d) => ({ key: spotKey(d.signal, d.text), name: `“${d.text}”`, explanation: d.note })),
-    // Plain text (no signal) that was picked: nothing quiz-specific to say, so point to what to inspect instead.
-    ...selected
-      .filter((k) => k.startsWith('|'))
-      .map((k) => ({ key: k, name: `“${k.slice(1)}”`, explanation: t.plainPick })),
     ...result.wrongSignals
       .filter((x) => !pickedDecoys.some((d) => d.signal === x.code))
       .map((x) => ({ key: x.code, name: x.name, explanation: x.explanation })),

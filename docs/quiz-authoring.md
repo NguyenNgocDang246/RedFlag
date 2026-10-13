@@ -17,9 +17,11 @@ Dành cho người và agent soạn bài qua CLI (`rf = pnpm -s --filter @redfla
 10. Số điện thoại, số tài khoản, mã thẻ luôn **che** (`0905 xxx 218`).
 
 ## C. Hotspot
-11. **Mọi đoạn mang dấu hiệu thật đều phải là hotspot.** Đừng để chữ thường chứa thủ đoạn (mở tệp rồi đăng nhập, "hết hạn 24 giờ", "chuyển vào TK bạn con", "nhập mật khẩu + OTP"). Trước khi lưu, đọc lại từng đoạn chữ thường: nếu nó làm người đọc đáng nghi thì gắn signal.
-12. **Mỗi bài phải có ít nhất 1 mồi** (hotspot có signal không thuộc đáp án). **[chặn]** Số mồi ≈ số hotspot đúng (lệch tối đa 1) chỉ là **gợi ý**, không bắt buộc. Bài an toàn: mọi hotspot đều là mồi.
-13. Mồi phải là thứ **người đọc dễ nghi nhầm** trong tình huống đó (lời chào chung chung, chữ ký bộ phận, hạn chót thật, nút bấm, brandname SMS, câu cảnh báo OTP), không phải chữ vô nghĩa.
+Chỉ có 2 loại hotspot: **dấu hiệu lừa đảo** và **mồi**. Mọi đoạn còn lại là chữ thường: người học **không chạm được, rê chuột cũng không có phản ứng gì**. Vì thế chính mồi là thứ buộc người học phân biệt thật/giả giữa những chỗ chạm được.
+
+11. **Hotspot đúng chỉ gắn cho chỗ tự nó đã sai**: đặt nguyên câu đó vào một tin thật thì không thể có. Ví dụ: domain/địa chỉ không khớp sổ tay, link ẩn, đòi OTP/mật khẩu/số thẻ/CCCD, tệp .html/.zip/.rar/.xlsm/.apk/.exe, chuyển vào tài khoản người thứ ba, quyền vượt chức năng app, lỗi chính tả thật, hạn chót phi thực tế (cắt điện sau 2 giờ, có mặt ở toà trong 24 giờ), lãi cố định theo ngày. Câu **chỉ đáng ngờ vì ngữ cảnh** (lời chào chung, "xác nhận ngay để tránh bị khoá", "bạn là khách hàng may mắn", "đang họp không nghe máy", tiêu đề nhắc lại nội dung) thì để **chữ thường**. Mỗi dấu hiệu nên có 1 hotspot rõ nhất; không gắn thêm câu nhắc lại cùng ý.
+12. **Bài lừa bắt buộc có ít nhất 1 mồi** **[chặn]**, và nên có **số mồi ≈ số hotspot đúng** (lệch tối đa 1, máy gợi ý). Nếu không, "chạm hết mọi thứ chạm được" sẽ luôn đúng. Bài an toàn: mọi hotspot đều là mồi, có thể không có hotspot nào.
+13. **Mồi đặt ở chỗ hay có dấu hiệu**: tên/địa chỉ người gửi, brandname SMS, tên liên hệ chat, thanh URL, link, nút dẫn đi, tệp đính kèm, số điện thoại, số tài khoản, nhà phát triển, quyền app. Mồi phải **tinh vi**: trông giống chỗ có thể sai nhưng ở đây lại đúng (domain/địa chỉ khớp sổ tay, brandname thật, tệp PDF/JPG, quyền đúng chức năng, số tổng đài thật, câu nhắc "không chia sẻ OTP", mã tham chiếu). **Không** gắn mồi cho câu trung tính trong thân bài (lời chào, lời cảm ơn, khẩu hiệu).
 14. Một hotspot một signal. Không gắn signal đáp án cho mồi.
 15. `HIDDEN_LINK`: chữ hiển thị trông thật, `href` trỏ domain khác. Tệp đính kèm ghi rõ đuôi (.html/.zip/.rar/.xlsm).
 
@@ -35,18 +37,18 @@ Tối thiểu **60 ký tự** **[chặn]**; không trùng nguyên văn (không p
 
 ## E. Chống lộ đáp án
 22. Mọi đoạn (đúng, mồi, chữ thường) cùng độ dài/văn phong/định dạng; không in đậm hay dấu hiệu thị giác. `note` chỉ trả về sau khi chấm (đã có `stripNotes`).
-23. Không xếp hotspot theo khuôn cố định ("hotspot đúng luôn ở cuối").
+23. Không xếp hotspot theo khuôn cố định ("hotspot đúng luôn ở cuối"). Vì chỉ hotspot chạm được, mỗi loại vị trí (người gửi, URL, tệp…) phải có lúc là dấu hiệu, có lúc là mồi trong kho bài.
 
 ## F. Độ khó và cân bằng kho
-24. Mức 1: 2–3 dấu hiệu rõ (domain nhái, hối thúc). Mức 2: tinh vi hơn (subdomain đánh lừa, link ẩn, tệp .zip) kèm mồi mạnh. Mức 3: chỉ lộ ở 1–2 chi tiết (đổi tài khoản nhà cung cấp, link share từ domain thật), nhiều mồi sát thật.
+24. Mức 1: 2–3 dấu hiệu rõ (domain nhái, hối thúc). Mức 2: tinh vi hơn (subdomain đánh lừa, link ẩn, tệp .zip) kèm mồi tinh vi. Mức 3: chỉ lộ ở 1–2 chi tiết (đổi tài khoản nhà cung cấp, link share từ domain thật), nhiều mồi sát thật.
 25. Giữ tỉ lệ **lừa : an toàn ≈ 2 : 1 theo chủ đề**; mỗi chủ đề có bài thật gần giống bài lừa để người học không rút ra "cứ gặp X là lừa". Chạy `rf quiz coverage` để thấy chủ đề đang lệch trước khi chọn chủ đề cho bài mới.
 
 ## G. Quy trình
 26. `rf quiz coverage` → `rf quiz template <kind> > q.json` → điền EN + VI → `rf quiz check --file q.json` → `rf quiz create --file q.json --dry-run` → `rf quiz create` (nháp) → xem trước `/admin/quiz/<id>` và tự làm thử (chọn chữ thường, chọn mồi, chọn đúng) → `rf quiz publish '#số'`. Sửa bài: `rf quiz export '#số' > q.json` → sửa → `rf quiz check '#số' --file q.json` → `rf quiz update '#số' --file q.json`.
 27. **Checklist tự rà — agent in ra khi tạo xong:**
-    - [ ] mọi đoạn đáng ngờ đã là hotspot
+    - [ ] hotspot đúng chỉ ở chỗ tự nó đã sai; câu chỉ đáng ngờ vì ngữ cảnh để chữ thường
     - [ ] mọi hotspot có note riêng, ≥60 ký tự, đủ 2 locale, có chi tiết cụ thể
-    - [ ] có ít nhất 1 mồi
+    - [ ] bài lừa có mồi, số mồi ≈ số hotspot đúng; mồi ở chỗ hay có dấu hiệu và đủ tinh vi
     - [ ] không brand/domain thật; số điện thoại/tài khoản đã che
     - [ ] tiêu đề không lộ đáp án
     - [ ] `rf quiz check` sạch (không còn `<…>` của template)

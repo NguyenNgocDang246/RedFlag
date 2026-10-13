@@ -81,15 +81,14 @@ function SignalSelect({
       onChange={onChange}
       title={!value ? t.plain : answer.includes(value) ? t.hotCorrect : t.hotDecoy}
       placeholder={t.plainOption}
-    >
-      {!known && <option value={value}>{t.unknown(value)}</option>}
-      {signals.map((x) => (
-        <option key={x.code} value={x.code}>
-          {answer.includes(x.code) ? '✓ ' : '◦ '}
-          {x.name}
-        </option>
-      ))}
-    </SelectInput>
+      options={[
+        ...(known ? [] : [{ value, label: t.unknown(value) }]),
+        ...signals.map((x) => ({
+          value: x.code,
+          label: `${answer.includes(x.code) ? '✓' : '◦'} ${x.name}`,
+        })),
+      ]}
+    />
   );
 }
 

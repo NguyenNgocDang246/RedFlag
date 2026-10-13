@@ -72,6 +72,10 @@
   flex: 0 0 auto;
   opacity: 0.8;
 }
+.brand,
+.right {
+  flex: 0 0 auto;
+}
 .right {
   margin-left: auto;
   display: flex;
@@ -228,6 +232,11 @@
   gap: 16px;
   flex-wrap: wrap;
 }
+/* Admin: same frame as the admin shell (1440px, see admin.module.css). */
+.inner.wide,
+.footInner.wide {
+  max-width: 1440px;
+}
 .footBrand {
   display: inline-flex;
   align-items: center;
@@ -267,6 +276,24 @@
   color: var(--fg);
 }
 
+/* Tablet: one row still fits once the nav drops its icons and tightens up. */
+@media (max-width: 1024px) {
+  .inner {
+    gap: 16px;
+  }
+  .nav {
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .navLink {
+    padding: 8px 10px;
+  }
+  .navIcon {
+    display: none;
+  }
+}
+
 @media (max-width: 640px) {
   /* Two rows: brand + actions, then the nav as a scrollable strip (text only). */
   .inner {
@@ -296,5 +323,9 @@
   }
   .right .loginLink {
     padding: 0 10px;
+  }
+  /* Same 16px side gutter as the header and page content. */
+  .footInner {
+    padding-inline: 16px;
   }
 }

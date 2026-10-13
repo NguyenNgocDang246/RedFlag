@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type FormEvent } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, Search, X } from 'lucide-react';
 import type { Facets, LibraryQuery, Locale } from '@/lib/api';
 import { LIBRARY_T, TRAIN_T } from '@/lib/i18n';
-import { SelectInput } from '@/components/select-input';
+import { SelectInput, type SelectOption } from '@/components/select-input';
 import s from './library.module.css';
 
 /**
@@ -17,11 +17,14 @@ export function LibraryFilters({
   query,
   facets,
   showStatus,
+  total,
 }: {
   locale: Locale;
   query: LibraryQuery;
   facets: Facets | null;
   showStatus: boolean;
+  /** Result count, shown on the toolbar row next to the sort control. */
+  total?: string;
 }) {
   const t = LIBRARY_T[locale];
   const tt = TRAIN_T[locale];
@@ -69,74 +72,72 @@ export function LibraryFilters({
         </button>
       </form>
 
-      <div className={s.selects}>
-        <div className={s.filterGrid}>
+      <div className={s.filterGrid}>
+        <Select
+          label={t.allChannels}
+          value={query.kind}
+          onChange={(v) => push({ kind: v })}
+          options={(facets?.kinds ?? []).map((k) => ({
+            value: k.code,
+            label: tt.kinds[k.code] ?? k.code,
+          }))}
+        />
+        <Select
+          label={t.allTopics}
+          value={query.category}
+          onChange={(v) => push({ category: v })}
+          options={(facets?.categories ?? []).map((c) => ({ value: c.code, label: c.name }))}
+        />
+        <Select
+          label={t.allSigns}
+          value={query.signal}
+          onChange={(v) => push({ signal: v })}
+          options={(facets?.signals ?? []).map((g) => ({ value: g.code, label: g.name }))}
+        />
+        <Select
+          label={t.allLevels}
+          value={query.level}
+          onChange={(v) => push({ level: v })}
+          options={[1, 2, 3].map((l) => ({ value: String(l), label: tt.difficulty[l - 1] }))}
+        />
+        {showStatus && (
           <Select
-            label={t.allChannels}
-            value={query.kind}
-            onChange={(v) => push({ kind: v })}
-          >
-            {(facets?.kinds ?? []).map((k) => (
-              <option key={k.code} value={k.code}>
-                {tt.kinds[k.code] ?? k.code}
-              </option>
-            ))}
-          </Select>
-          <Select
-            label={t.allTopics}
-            value={query.category}
-            onChange={(v) => push({ category: v })}
-          >
-            {(facets?.categories ?? []).map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            label={t.allSigns}
-            value={query.signal}
-            onChange={(v) => push({ signal: v })}
-          >
-            {(facets?.signals ?? []).map((g) => (
-              <option key={g.code} value={g.code}>
-                {g.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            label={t.allLevels}
-            value={query.level}
-            onChange={(v) => push({ level: v })}
-          >
-            {[1, 2, 3].map((l) => (
-              <option key={l} value={String(l)}>
-                {tt.difficulty[l - 1]}
-              </option>
-            ))}
-          </Select>
-          {showStatus && (
-            <Select
-              label={t.allStatus}
-              value={query.status}
-              onChange={(v) => push({ status: v })}
-            >
-              {(['todo', 'attempted', 'solved'] as const).map((st) => (
-                <option key={st} value={st}>
-                  {t.status[st]}
-                </option>
-              ))}
-            </Select>
-          )}
-        </div>
+            label={t.allStatus}
+            value={query.status}
+            onChange={(v) => push({ status: v })}
+            options={(['todo', 'attempted', 'solved'] as const).map((st) => ({
+              value: st,
+              label: t.status[st],
+            }))}
+          />
+        )}
+      </div>
 
+      <div className={s.toolbar}>
+        <span className={s.toolbarStart}>
+          {total && <span className={s.total}>{total}</span>}
+          {active && (
+            <button
+              type="button"
+              className={s.reset}
+              onClick={() => {
+                setQ('');
+                router.push(
+                  `${pathname}?${new URLSearchParams({ locale, ...(query.sort ? { sort: query.sort } : {}) })}`,
+                );
+              }}
+            >
+              <X size={16} aria-hidden />
+              {t.reset}
+            </button>
+          )}
+        </span>
         <span className={s.sortGroup}>
           <SelectInput
             variant="pill"
             fit
             label={t.sortBy}
             hideLabel
-            className={s.select}
             value={sort}
             onChange={(v) => push({ sort: v, dir: undefined })}
             options={(['number', 'level', 'newest'] as const).map((k) => ({
@@ -160,22 +161,6 @@ export function LibraryFilters({
             )}
           </button>
         </span>
-
-        {active && (
-          <button
-            type="button"
-            className={s.reset}
-            onClick={() => {
-              setQ('');
-              router.push(
-                `${pathname}?${new URLSearchParams({ locale, ...(query.sort ? { sort: query.sort } : {}) })}`,
-              );
-            }}
-          >
-            <X size={16} aria-hidden />
-            {t.reset}
-          </button>
-        )}
       </div>
     </div>
   );
@@ -185,12 +170,12 @@ function Select({
   label,
   value,
   onChange,
-  children,
+  options,
 }: {
   label: string;
   value?: string;
   onChange: (v: string | undefined) => void;
-  children: ReactNode;
+  options: SelectOption[];
 }) {
   return (
     <SelectInput
@@ -201,8 +186,7 @@ function Select({
       active={Boolean(value)}
       value={value}
       onChange={(v) => onChange(v || undefined)}
-    >
-      {children}
-    </SelectInput>
+      options={options}
+    />
   );
 }
