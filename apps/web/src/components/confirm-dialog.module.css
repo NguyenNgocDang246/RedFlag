@@ -1,0 +1,35 @@
+.dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  color: var(--fg);
+  box-shadow: var(--shadow-lg);
+}
+.dialog::backdrop {
+  background: rgba(17, 16, 20, 0.45);
+}
+.box {
+  padding: 22px 22px 18px;
+}
+.message {
+  margin: 0 0 20px;
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.danger {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+.danger:hover {
+  background: var(--accent-strong);
+}

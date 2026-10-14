@@ -345,6 +345,8 @@ export type TestFrequencyLevel = 'low' | 'medium' | 'high';
 export interface TestStatus {
   state: 'on' | 'paused' | 'off';
   frequency: TestFrequencyLevel | null;
+  /** Set when the system, not the user, switched tests off. */
+  stoppedReason?: 'bounced' | 'complained' | null;
 }
 
 export interface TestWarning {

@@ -51,7 +51,7 @@ Environment Variables (`<web>` là domain của project web, ví dụ `redflag-w
 | `MAIL_FROM` | `RedFlag <no-reply@domain-đã-verify>` |
 | `ADMIN_EMAILS` | email admin |
 | `SEND_WINDOW_START`, `SEND_WINDOW_END` | khung giờ được phép gửi mail test, tính theo giờ của người nhận (mặc định 8 và 20, không bắt buộc) |
-| `REPORT_EMAIL`, `RESEND_WEBHOOK_SECRET` | nếu dùng tính năng chuyển tiếp mail để báo cáo |
+| `REPORT_EMAIL`, `RESEND_WEBHOOK_SECRET` | nhận báo cáo qua mail chuyển tiếp, và xử lý mail bị trả về / bị đánh dấu spam |
 | `WEB_PUBLIC_URL` | `https://<web>` |
 | `API_PUBLIC_URL` | `https://<web>` (người dùng gọi API qua domain web) |
 | `TRACKING_PUBLIC_URL` | domain tracking riêng, hoặc `https://<api>` |
@@ -81,7 +81,7 @@ Deploy xong, nếu domain web khác với giá trị đã điền tạm ở bư�
 ## 4. Sau khi deploy
 
 - Google Cloud Console → OAuth client → thêm Authorized redirect URI: `https://<web>/api/auth/google/callback`.
-- Resend inbound (nếu dùng): webhook trỏ về `https://<web>/api/inbound/resend`.
+- Resend webhook: trỏ về `https://<web>/api/inbound/resend`, bật 3 sự kiện `email.received`, `email.bounced`, `email.complained` trên cùng một webhook (dùng chung `RESEND_WEBHOOK_SECRET`). Mail bị trả về hẳn thì tạm dừng test của người đó, bị đánh dấu spam thì tắt hẳn.
 - Vercel → `redflag-api` → Settings → Cron Jobs: phải thấy `/api/cron/daily`.
 
 ## 5. Kiểm tra

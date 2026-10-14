@@ -53,6 +53,12 @@ enum CampaignStatus {
   cancelled // tests paused / turned off / frequency changed before it went out (R1)
 }
 
+// Why the system turned someone's tests off by itself (cleared when they turn them back on).
+enum TestStopReason {
+  bounced // the address hard-bounced: nothing can be delivered there
+  complained // they marked a test email as spam: never send again without a fresh opt-in (R1)
+}
+
 enum ConsentType {
   terms
   test_flow
@@ -197,13 +203,14 @@ model UserTrainingPrefs {
 
 // Test flow opt-in — fully independent of Training (R1).
 model UserTestOptin {
-  id        String        @id @default(cuid())
-  userId    String        @unique
-  enabled   Boolean       @default(false)
-  frequency TestFrequency @default(off)
-  timezone  String? // IANA zone from the browser when turned on — sending window is local time (R8)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id            String          @id @default(cuid())
+  userId        String          @unique
+  enabled       Boolean         @default(false)
+  frequency     TestFrequency   @default(off)
+  timezone      String? // IANA zone from the browser when turned on — sending window is local time (R8)
+  stoppedReason TestStopReason? // set when a bounce/complaint switched tests off, not the user
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -492,16 +499,19 @@ model AuditLog {
 // ─────────────────────── Context: testing ───────────────────────
 
 model Campaign {
-  id          String          @id @default(cuid())
-  userId      String
-  variantId   String
-  channel     DeliveryChannel @default(email)
-  status      CampaignStatus  @default(scheduled)
-  locale      Locale          @default(en) // content language, fixed when the campaign is created
-  isTest      Boolean         @default(false) // admin "send to me" preview — not scored
-  scheduledAt DateTime
-  sentAt      DateTime?
-  createdAt   DateTime        @default(now())
+  id           String          @id @default(cuid())
+  userId       String
+  variantId    String
+  channel      DeliveryChannel @default(email)
+  status       CampaignStatus  @default(scheduled)
+  locale       Locale          @default(en) // content language, fixed when the campaign is created
+  isTest       Boolean         @default(false) // admin "send to me" preview — not scored
+  scheduledAt  DateTime
+  sentAt       DateTime?
+  // Failed sends: how many tries so far, and when the next one may run (R8: bounded retry with backoff).
+  sendAttempts Int             @default(0)
+  retryAt      DateTime?
+  createdAt    DateTime        @default(now())
 
   user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   variant  Variant         @relation(fields: [variantId], references: [id])

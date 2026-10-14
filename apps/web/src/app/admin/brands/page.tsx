@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { BookMarked, Plus } from 'lucide-react';
 import { IconHeading } from '@/components/icon-heading';
+import { useConfirm } from '@/components/confirm-dialog';
 import { SelectInput } from '@/components/select-input';
 import {
   BRAND_CHANNELS,
@@ -64,6 +65,7 @@ const toLines = (text: string) =>
 
 export default function AdminBrands() {
   const { t, locale } = useAdmin();
+  const { ask, dialog } = useConfirm();
   const tb = t.brands;
   const langName = (l: BrandLocale) => t.common.langName[l];
   const [rows, setRows] = useState<AdminBrand[] | null>(null);
@@ -128,7 +130,7 @@ export default function AdminBrands() {
   };
 
   const remove = async (b: AdminBrand) => {
-    if (!confirm(tb.confirmDelete(b.name, b.locale.toUpperCase()))) return;
+    if (!(await ask(tb.confirmDelete(b.name, b.locale.toUpperCase()), { confirmLabel: t.common.delete, cancelLabel: t.common.cancel, danger: true }))) return;
     setError(null);
     try {
       await deleteBrand(b.id);
@@ -368,6 +370,7 @@ export default function AdminBrands() {
         </table>
         {shown?.length === 0 && <div className={s.empty}>{tb.empty(langName(tab))}</div>}
       </div>
+      {dialog}
     </>
   );
 }

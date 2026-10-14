@@ -171,6 +171,7 @@ export function AccountSection({ me, locale }: { me: Me; locale: Locale }) {
             label={t.currentPassword}
             value={current}
             onChange={setCurrent}
+            placeholder={ta.passwordPlaceholder}
             showText={ta.showPassword}
             hideText={ta.hidePassword}
             autoComplete="current-password"
@@ -181,6 +182,7 @@ export function AccountSection({ me, locale }: { me: Me; locale: Locale }) {
           hint={ta.passwordHint}
           value={next}
           onChange={setNext}
+          placeholder={ta.newPasswordPlaceholder}
           showText={ta.showPassword}
           hideText={ta.hidePassword}
           autoComplete="new-password"

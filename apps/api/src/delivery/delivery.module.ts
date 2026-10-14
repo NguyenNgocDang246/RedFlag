@@ -5,6 +5,7 @@ import { DeliveryConfig } from './delivery.config';
 import { DeliveryService } from './delivery.service';
 import { InboundController } from './inbound.controller';
 import { InboundReportService } from './inbound-report.service';
+import { MailFeedbackService } from './mail-feedback.service';
 import { ReportController } from './report.controller';
 import { ReportService } from './report.service';
 import { SchedulerService } from './scheduler.service';
@@ -16,9 +17,9 @@ import { TrackingService } from './tracking.service';
  * into signals. MailService comes from the global MailModule.
  */
 @Module({
-  imports: [IdentityModule], // JwtAuthGuard for the report routes
+  imports: [IdentityModule], // JwtAuthGuard for the report routes; TestSettingsService for bounces
   controllers: [TrackingController, ReportController, InboundController, CronController],
-  providers: [DeliveryConfig, SchedulerService, DeliveryService, TrackingService, ReportService, InboundReportService],
+  providers: [DeliveryConfig, SchedulerService, DeliveryService, TrackingService, ReportService, InboundReportService, MailFeedbackService],
   exports: [SchedulerService, DeliveryService],
 })
 export class DeliveryModule {}
