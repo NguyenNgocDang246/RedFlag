@@ -4,9 +4,11 @@ File này là **thư viện kỹ thuật** để thiết kế bài train "đây 
 
 > **Luật soạn bài và checklist** nằm ở [`quiz-authoring.md`](./quiz-authoring.md) — file này không chép lại luật, chỉ bổ trợ phần "có sẵn khuôn để bắt chước".
 > **Kiểu dữ liệu** (các vỏ, `Span`, hotspot) nằm ở [`packages/shared/src/scenarios.ts`](../packages/shared/src/scenarios.ts).
-> Ví dụ thật đang chạy: [`seed-data/quiz-email.ts`](../apps/api/prisma/seed-data/quiz-email.ts), [`seed-data/quiz-mixed.ts`](../apps/api/prisma/seed-data/quiz-mixed.ts).
+> Ví dụ thật đang chạy: xem bài có sẵn bằng `rf quiz list` rồi `rf quiz export '#số'`.
 
-Mỗi bài là một `QuizSeed`: một tình huống, một vỏ (`kind`), đủ `en` + `vi`, trong đó vài chỗ là **hotspot** (chạm được) — có hai loại duy nhất: **dấu hiệu lừa** (signal nằm trong đáp án) và **mồi/decoy** (trông đáng ngờ nhưng ở bài này là bình thường). Mọi chỗ khác là chữ thường, không chạm được. Dựng bằng `h()` (hotspot đúng) và `d()` (mồi) trong [`seed-data/common.ts`](../apps/api/prisma/seed-data/common.ts).
+Nội dung bài **nằm trong DB**, không còn file seed. Soạn bài qua data CLI (`rf quiz template <kind>` → điền → `rf quiz create --file`) hoặc trang admin.
+
+Mỗi bài là một tình huống, một vỏ (`kind`), đủ `en` + `vi`, trong đó vài chỗ là **hotspot** (chạm được) — có hai loại duy nhất: **dấu hiệu lừa** (signal nằm trong đáp án) và **mồi/decoy** (trông đáng ngờ nhưng ở bài này là bình thường, bắt buộc có `note`). Mọi chỗ khác là chữ thường, không chạm được.
 
 ---
 
@@ -31,7 +33,7 @@ Mỗi vị trí trong vỏ (người gửi, địa chỉ, URL, link, tệp, quy�
 
 ## 2. Bảng 13 tín hiệu (signal)
 
-Lấy nguyên văn từ `SIGNAL_I18N` ([`seed.ts`](../apps/api/prisma/seed.ts)). "Mức dùng" = tần suất trong kho bài hiện tại, để biết signal nào đang thiếu bài.
+Tín hiệu là dữ liệu trong DB — xem danh sách hiện có bằng `rf signal list`. "Mức dùng" = tần suất trong kho bài hiện tại, để biết signal nào đang thiếu bài.
 
 | Mã | Tên (vi / en) | Bản chất | Hay nằm ở | Mức dùng |
 |---|---|---|---|---|
@@ -252,6 +254,6 @@ Rút gọn — đầy đủ ở [§G `quiz-authoring.md`](./quiz-authoring.md):
 - [`docs/quiz-authoring.md`](./quiz-authoring.md) — luật soạn bài + checklist đầy đủ + quy trình CLI.
 - [`packages/shared/src/scenarios.ts`](../packages/shared/src/scenarios.ts) — `QuizKind`, `Span`, interface từng vỏ.
 - [`packages/shared/src/signals.ts`](../packages/shared/src/signals.ts) — `SignalCode`.
-- [`apps/api/prisma/seed-data/common.ts`](../apps/api/prisma/seed-data/common.ts) — `h()`, `d()`, `QuizSeed`.
-- [`apps/api/prisma/seed-data/quiz-email.ts`](../apps/api/prisma/seed-data/quiz-email.ts), [`quiz-mixed.ts`](../apps/api/prisma/seed-data/quiz-mixed.ts) — ví dụ đang chạy.
 - [`apps/api/src/cli/templates.ts`](../apps/api/src/cli/templates.ts) — bộ sinh khung JSON cho `rf quiz template <kind>`.
+- [`apps/api/src/cli/data.ts`](../apps/api/src/cli/data.ts) — toàn bộ lệnh data CLI (quiz, signal, category, brand).
+- [`packages/shared/src/scenario-rules.ts`](../packages/shared/src/scenario-rules.ts) — luật kiểm hotspot/mồi mà `rf quiz check` chạy.

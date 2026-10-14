@@ -15,11 +15,7 @@
     "test": "vitest run",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio",
-    "db:seed": "ts-node --project prisma/tsconfig.json prisma/seed.ts"
-  },
-  "prisma": {
-    "seed": "ts-node --project prisma/tsconfig.json prisma/seed.ts"
+    "prisma:studio": "prisma studio"
   },
   "dependencies": {
     "@nest-lab/throttler-storage-redis": "^1.2.0",

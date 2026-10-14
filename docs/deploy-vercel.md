@@ -14,13 +14,14 @@ Một repo, hai project Vercel: `redflag-api` (thư mục `apps/api`) và `redfl
 1. **Neon** (neon.tech): tạo project, nên chọn region Singapore. Lấy hai chuỗi kết nối:
    - *Pooled* (host có `-pooler`): thêm `&pgbouncer=true&connection_limit=1`. Đây là `DATABASE_URL` cho Vercel.
    - *Direct* (host không có `-pooler`): chỉ dùng để chạy migrate từ máy mình.
-2. Chạy migrate và seed vào Neon từ máy local (PowerShell):
+2. Chạy migrate vào Neon từ máy local (PowerShell):
    ```powershell
    $env:DATABASE_URL = "<direct URL>"
    pnpm --filter @redflag/api exec prisma migrate deploy
-   pnpm --filter @redflag/api db:seed
    Remove-Item Env:DATABASE_URL
    ```
+   Không có bước seed: tín hiệu, chủ đề, thương hiệu và bài train là **nội dung**, tạo
+   qua data CLI (`pnpm --filter @redflag/api data`) hoặc trang admin.
 3. **Upstash Redis** (không bắt buộc): tạo database, lấy URL dạng `rediss://...`. Nếu không có, rate limit chỉ đếm trong RAM của từng instance, nên lỏng hơn.
 4. **Resend**: verify domain gửi (SPF, DKIM, DMARC) và tạo API key.
 5. Tạo hai chuỗi ngẫu nhiên cho `SESSION_SECRET` và `CRON_SECRET`:

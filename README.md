@@ -73,9 +73,12 @@ pnpm install
 cp .env.example .env
 pnpm infra:up                                   # Postgres, Redis, Mailpit
 pnpm --filter @redflag/api prisma:migrate
-pnpm --filter @redflag/api db:seed
 pnpm dev                                        # web + api in watch mode
 ```
+
+> A fresh database starts empty. Signals, categories, brands and quiz questions are
+> content, created through the data CLI (`pnpm --filter @redflag/api data`) or the
+> admin pages — see [docs/development.md](docs/development.md).
 
 - Web: http://localhost:4001
 - API: http://localhost:4000/api/health
