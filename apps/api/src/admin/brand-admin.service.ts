@@ -11,6 +11,11 @@ const CHANNELS = [
   'hotlines',
   'apps',
   'socialPages',
+  'paymentAccounts',
+  'legalNames',
+  'taxCodes',
+  'addresses',
+  'shortCodes',
 ] as const;
 
 /** Trims whitespace, drops blank and duplicate lines. */
@@ -47,6 +52,11 @@ export class BrandAdminService {
       hotlines: b.hotlines,
       apps: b.apps,
       socialPages: b.socialPages,
+      paymentAccounts: b.paymentAccounts,
+      legalNames: b.legalNames,
+      taxCodes: b.taxCodes,
+      addresses: b.addresses,
+      shortCodes: b.shortCodes,
       order: b.order,
       status: b.status,
     }));

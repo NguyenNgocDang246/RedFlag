@@ -107,6 +107,11 @@ export const BRAND_CHANNELS = [
   'hotlines',
   'apps',
   'socialPages',
+  'paymentAccounts',
+  'legalNames',
+  'taxCodes',
+  'addresses',
+  'shortCodes',
 ] as const;
 export type BrandChannel = (typeof BRAND_CHANNELS)[number];
 
@@ -252,6 +257,8 @@ export interface AdminTestEmailVariant {
   subject: string;
   senderName: string;
   signals: string[];
+  /** Times sent to learners (not admin previews). Above 0 = locked. */
+  sent: number;
 }
 
 export interface AdminTestEmail {
@@ -270,8 +277,51 @@ export interface TestEmailPreview {
   text: string;
 }
 
+export interface TestEmailText {
+  senderName: string;
+  subject: string;
+  body: string;
+}
+
+export interface TestEmailVariantInput {
+  /** Absent = a new email. */
+  id?: string;
+  difficultyLevel: number;
+  signalCodes: string[];
+  translations: { en?: TestEmailText; vi?: TestEmailText };
+}
+
+export interface TestEmailInput {
+  code?: string;
+  categoryCode: string;
+  titles: { en?: string; vi?: string };
+  variants: TestEmailVariantInput[];
+  status?: ContentStatus;
+}
+
+export interface AdminTestEmailDetail extends TestEmailInput {
+  id: string;
+  code: string;
+  status: ContentStatus;
+  variants: (TestEmailVariantInput & { id: string; sent: number })[];
+  issues: string[];
+  updatedAt: string;
+}
+
 export const listTestEmails = () => call<AdminTestEmail[]>('GET', '/test-emails');
+export const getTestEmail = (id: string) => call<AdminTestEmailDetail>('GET', `/test-emails/${id}`);
+export const createTestEmail = (b: TestEmailInput) => call<SaveResult>('POST', '/test-emails', b);
+export const updateTestEmail = (id: string, b: TestEmailInput) =>
+  call<SaveResult>('PUT', `/test-emails/${id}`, b);
+export const setTestEmailStatus = (id: string, status: ContentStatus) =>
+  call<{ id: string; status: ContentStatus }>('PATCH', `/test-emails/${id}/status`, { status });
+export const deleteTestEmail = (id: string) => call<{ ok: true }>('DELETE', `/test-emails/${id}`);
 export const previewTestEmail = (variantId: string) =>
   call<TestEmailPreview>('GET', `/test-emails/${variantId}/preview`);
-export const sendTestEmailToMe = (variantId: string) =>
-  call<{ ok: true; campaignId: string }>('POST', `/test-emails/${variantId}/send-to-me`);
+/** `locale`: which language of the email to send (default: the admin UI's). */
+export const sendTestEmailToMe = (variantId: string, locale?: 'en' | 'vi') =>
+  call<{ ok: true; campaignId: string }>(
+    'POST',
+    `/test-emails/${variantId}/send-to-me`,
+    locale ? { locale } : undefined,
+  );

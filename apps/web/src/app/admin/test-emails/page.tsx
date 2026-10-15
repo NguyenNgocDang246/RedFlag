@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ExternalLink, LoaderCircle, Mail, Send, TriangleAlert } from 'lucide-react';
+import Link from 'next/link';
+import { LoaderCircle, Lock, Mail, Plus, Send } from 'lucide-react';
 import {
   listTestEmails,
   previewTestEmail,
@@ -9,26 +10,16 @@ import {
   type AdminTestEmail,
   type TestEmailPreview,
 } from '@/lib/admin-api';
-import { fetchTestWarning, type TestWarning } from '@/lib/api';
 import { IconHeading } from '@/components/icon-heading';
-import { LinkedText, reportLinks } from '@/components/linked-text';
-import { splitParagraphs } from '@/lib/text';
 import { useAdmin } from '../use-admin';
 import s from '../admin.module.css';
 import t2 from './test-emails.module.css';
 
-/**
- * Test emails (Phase 4).
- *
- * The panel at the top is the point of this page as much as the list: it shows an editor the exact
- * instructions a learner agrees to — including where the report button is — so the wording and the
- * product can't drift apart.
- */
+/** Test emails (Phase 4): list, preview, send to yourself; editing lives in ./editor. */
 export default function AdminTestEmailsPage() {
-  const { t, locale } = useAdmin();
+  const { t, href } = useAdmin();
   const tt = t.testEmails;
   const [items, setItems] = useState<AdminTestEmail[] | null>(null);
-  const [warning, setWarning] = useState<TestWarning | null>(null);
   const [preview, setPreview] = useState<TestEmailPreview | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [sentId, setSentId] = useState<string | null>(null);
@@ -38,10 +29,7 @@ export default function AdminTestEmailsPage() {
     listTestEmails()
       .then(setItems)
       .catch(() => setItems([]));
-    fetchTestWarning(locale)
-      .then(setWarning)
-      .catch(() => setWarning(null));
-  }, [locale]);
+  }, []);
 
   const onPreview = async (variantId: string) => {
     setError(null);
@@ -68,37 +56,18 @@ export default function AdminTestEmailsPage() {
 
   return (
     <>
-      <IconHeading icon={Mail} title={tt.title} sub={tt.sub} className={s.pageHead} />
+      <IconHeading
+        icon={Mail}
+        title={tt.title}
+        sub={tt.sub}
+        className={s.pageHead}
+        actions={
+          <Link href={href('/admin/test-emails/new')} className="btn btn-primary btn-sm">
+            <Plus size={16} aria-hidden /> {tt.newBtn}
+          </Link>
+        }
+      />
 
-      {/* What the learner agrees to */}
-      <section className={t2.guide}>
-        <h2 className={t2.guideTitle}>
-          <TriangleAlert size={18} aria-hidden />
-          {tt.guideTitle}
-        </h2>
-        <p className={t2.guideSub}>{tt.guideSub}</p>
-        {warning ? (
-          <>
-            <div className={t2.guideBody}>
-              {splitParagraphs(warning.warning).map((para) => (
-                <p key={para}>
-                  <LinkedText text={para} links={reportLinks(warning)} />
-                </p>
-              ))}
-            </div>
-            <dl className={t2.guideMeta}>
-              <dt>{tt.confirmPhrase}</dt>
-              <dd>“{warning.confirmPhrase}”</dd>
-            </dl>
-            <a className={t2.guideLink} href={warning.reportPageUrl} target="_blank" rel="noreferrer">
-              <ExternalLink size={15} aria-hidden />
-              {tt.openReportPage}
-            </a>
-          </>
-        ) : (
-          <LoaderCircle size={18} className={t2.spin} aria-hidden />
-        )}
-      </section>
 
       {error && <p className={s.error}>{error}</p>}
 
@@ -117,6 +86,9 @@ export default function AdminTestEmailsPage() {
                 <span className={mail.status === 'published' ? t2.published : t2.draft}>
                   {mail.status === 'published' ? tt.published : tt.draft}
                 </span>
+                <Link href={href(`/admin/test-emails/${mail.id}`)} className="btn btn-ghost btn-sm">
+                  {tt.edit}
+                </Link>
               </div>
 
               {mail.variants.map((v) => (
@@ -129,6 +101,11 @@ export default function AdminTestEmailsPage() {
                     <span className={t2.meta}>
                       {tt.signs}: {v.signals.join(', ') || '—'}
                     </span>
+                    {v.sent > 0 && (
+                      <span className={t2.meta}>
+                        <Lock size={12} aria-hidden /> {tt.sentCount(v.sent)}
+                      </span>
+                    )}
                   </div>
                   <div className={t2.variantActions}>
                     <button type="button" className="btn btn-secondary btn-sm" onClick={() => void onPreview(v.id)}>

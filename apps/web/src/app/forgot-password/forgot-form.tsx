@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { KeyRound, MailCheck } from 'lucide-react';
+import { MailCheck } from 'lucide-react';
 import { ApiError, requestPasswordReset, type Locale } from '@/lib/api';
 import { AUTH_T } from '@/lib/i18n';
 import { AuthCard, authStyles as s, EmailField, isEmail } from '@/components/auth-ui';
@@ -46,14 +46,14 @@ export function ForgotForm({ locale }: { locale: Locale }) {
   }
 
   return (
-    <AuthCard icon={<KeyRound size={26} />} title={t.forgotTitle} sub={t.forgotSub}>
+    <AuthCard title={t.forgotTitle} sub={t.forgotSub}>
       <form onSubmit={submit} noValidate>
         {error && (
           <p className={s.error} role="alert">
             {error}
           </p>
         )}
-        <EmailField label={t.email} value={email} onChange={setEmail} />
+        <EmailField label={t.email} value={email} onChange={setEmail} placeholder={t.emailPlaceholder} />
         <button className={`btn btn-primary btn-lg ${s.submit}`} type="submit" disabled={busy}>
           {busy ? t.working : t.forgotBtn}
         </button>

@@ -43,6 +43,7 @@ import { TestSettingsService } from './consent/test-settings.service';
     OptionalJwtGuard,
   ],
   // Exported so other contexts (e.g. Training) can reuse the guard + JwtModule.
-  exports: [JwtModule, JwtAuthGuard, OptionalJwtGuard],
+  // TestSettingsService: delivery switches tests off on a bounce or spam complaint.
+  exports: [JwtModule, JwtAuthGuard, OptionalJwtGuard, TestSettingsService],
 })
 export class IdentityModule {}

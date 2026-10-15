@@ -26,6 +26,12 @@ export const RULE_MSG = {
     hintNoDecoy: 'chưa có hotspot mồi',
     hintUnbalanced: (decoys: number, correct: number) =>
       `số mồi (${decoys}) lệch nhiều so với số hotspot đúng (${correct}) — chỉ là gợi ý`,
+    hintTooManySignals: (level: number, n: number, max: number) =>
+      `mức ${level} nên có tối đa ${max} dấu hiệu đáp án, bài này có ${n} — chỉ là gợi ý`,
+    hintTooFewDecoys: (_level: number, n: number, min: number) =>
+      `nên có ít nhất ${min} mồi, bài này có ${n} — chạm hết mà vẫn được điểm thì bài quá dễ`,
+    hintTooManyDecoys: (level: number, n: number, max: number) =>
+      `mức ${level} nên có tối đa ${max} mồi, bài này có ${n} — chỉ là gợi ý`,
     missing: (k: string) => `thiếu "${k}"`,
     invalid: (k: string) => `"${k}" không hợp lệ`,
     minLines: (k: string, min: number) => `"${k}" cần ít nhất ${min} dòng`,
@@ -60,6 +66,12 @@ export const RULE_MSG = {
     hintNoDecoy: 'no decoy hotspot yet',
     hintUnbalanced: (decoys: number, correct: number) =>
       `decoys (${decoys}) are far from correct hotspots (${correct}) — just a suggestion`,
+    hintTooManySignals: (level: number, n: number, max: number) =>
+      `level ${level} should have at most ${max} answer signals, this quiz has ${n} — just a suggestion`,
+    hintTooFewDecoys: (_level: number, n: number, min: number) =>
+      `aim for at least ${min} decoys, this quiz has ${n} — if tapping everything still scores, the quiz is too easy`,
+    hintTooManyDecoys: (level: number, n: number, max: number) =>
+      `level ${level} should have at most ${max} decoys, this quiz has ${n} — just a suggestion`,
     missing: (k: string) => `missing "${k}"`,
     invalid: (k: string) => `"${k}" is invalid`,
     minLines: (k: string, min: number) => `"${k}" needs at least ${min} line(s)`,
@@ -212,8 +224,9 @@ export function countHotspots(
   return { correct, decoys: spots.length - correct };
 }
 
-/** Minimum length of a hotspot `note` — a real explanation, not a one-word verdict. */
-export const MIN_NOTE_LENGTH = 60;
+/** Minimum length of a hotspot `note` — a clear explanation is enough, it does not have to be long.
+ *  The bar only exists to block one-word verdicts ("đúng", "bình thường"). */
+export const MIN_NOTE_LENGTH = 25;
 
 /** Normalises a note for duplicate detection (case, accents kept; whitespace collapsed). */
 export const normalizeNote = (note: string) =>
@@ -284,16 +297,58 @@ export function checkQuizHotspots(
   return errors;
 }
 
-/** Non-blocking suggestions (data CLI). */
+/**
+ * How many answer signals and decoys a quiz should carry, per difficulty level
+ * (docs/simulation-design.md §1).
+ *
+ * There is NO minimum on answer signals: the count follows from the scenario, and one decisive
+ * signal is better than a second one invented to hit a quota. Only the ceiling is enforced.
+ * Decoys are the difficulty knob — a quiz needs at least as many decoys as answer signals
+ * (otherwise tapping everything wins), and level 3 needs more because every genuine artifact
+ * must be tappable.
+ */
+export const LEVEL_BANDS: Record<
+  number,
+  { maxSignals: number; minDecoys: number; maxDecoys?: number }
+> = {
+  1: { maxSignals: 3, minDecoys: 2 },
+  2: { maxSignals: 3, minDecoys: 2 },
+  3: { maxSignals: 2, minDecoys: 4, maxDecoys: 6 },
+};
+
+/** Decoys a safe quiz should carry — the same at every level, since a correct answer never taps. */
+export const SAFE_DECOY_BAND: [number, number] = [2, 3];
+
+/** Non-blocking suggestions (data CLI). Pass `difficultyLevel` to get the per-level checks. */
 export function hotspotHints(
-  args: { signalCodes: string[]; scenarioData: unknown },
+  args: {
+    signalCodes: string[];
+    scenarioData: unknown;
+    difficultyLevel?: number;
+    isScam?: boolean;
+  },
   locale: Locale = 'vi',
 ): string[] {
   const m = RULE_MSG[locale];
   const hints: string[] = [];
+  const isScam = args.isScam !== false;
   const { correct, decoys } = countHotspots(args.scenarioData, args.signalCodes);
-  if (decoys === 0) hints.push(m.hintNoDecoy);
-  else if (Math.abs(correct - decoys) > 1) hints.push(m.hintUnbalanced(decoys, correct));
+  if (isScam && decoys === 0) hints.push(m.hintNoDecoy);
+  const level = args.difficultyLevel;
+  if (level === undefined) return hints;
+  const band = LEVEL_BANDS[level];
+  if (!band) return hints;
+  if (isScam) {
+    if (correct > band.maxSignals) hints.push(m.hintTooManySignals(level, correct, band.maxSignals));
+    const min = Math.max(band.minDecoys, correct);
+    if (decoys < min) hints.push(m.hintTooFewDecoys(level, decoys, min));
+    if (band.maxDecoys !== undefined && decoys > band.maxDecoys)
+      hints.push(m.hintTooManyDecoys(level, decoys, band.maxDecoys));
+  } else {
+    const [lo, hi] = SAFE_DECOY_BAND;
+    if (decoys < lo) hints.push(m.hintTooFewDecoys(level, decoys, lo));
+    if (decoys > hi) hints.push(m.hintTooManyDecoys(level, decoys, hi));
+  }
   return hints;
 }
 

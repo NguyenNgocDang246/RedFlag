@@ -24,6 +24,7 @@ import {
 } from '@/lib/api';
 import Link from 'next/link';
 import { ME_T, REPORT_T } from '@/lib/i18n';
+import { useConfirm } from '@/components/confirm-dialog';
 import { LinkedText, reportLinks } from '@/components/linked-text';
 import { splitParagraphs } from '@/lib/text';
 import s from './me.module.css';
@@ -59,6 +60,7 @@ export function TestSettings({
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { ask, dialog } = useConfirm();
 
   // The warning + sentence are only needed while off, in the page's language.
   useEffect(() => {
@@ -126,6 +128,11 @@ export function TestSettings({
         </span>
       </div>
       <p className={s.muted}>{t.testSub}</p>
+      {status.stoppedReason && (
+        <p className={s.note} role="status">
+          {status.stoppedReason === 'bounced' ? t.stoppedBounced : t.stoppedComplained}
+        </p>
+      )}
 
       {status.state === 'off' ? (
         <div className={s.stack}>
@@ -213,8 +220,13 @@ export function TestSettings({
               type="button"
               className={`btn btn-ghost ${s.danger}`}
               disabled={busy}
-              onClick={() => {
-                if (window.confirm(t.unsubscribeConfirm)) void run(unsubscribeTest);
+              onClick={async () => {
+                const ok = await ask(t.unsubscribeConfirm, {
+                  confirmLabel: t.unsubscribe,
+                  cancelLabel: t.cancel,
+                  danger: true,
+                });
+                if (ok) void run(unsubscribeTest);
               }}
             >
               <Power size={18} aria-hidden />
@@ -229,6 +241,7 @@ export function TestSettings({
           {error}
         </p>
       )}
+      {dialog}
     </section>
   );
 }

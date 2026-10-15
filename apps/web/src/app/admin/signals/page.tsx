@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Flag, Plus } from 'lucide-react';
 import { IconHeading } from '@/components/icon-heading';
+import { useConfirm } from '@/components/confirm-dialog';
 import {
   createSignal,
   deleteSignal,
@@ -24,6 +25,7 @@ const blank = (): Draft => ({
 
 export default function AdminSignals() {
   const { t, locale } = useAdmin();
+  const { ask, dialog } = useConfirm();
   const ts = t.signals;
   const [rows, setRows] = useState<AdminSignal[] | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -72,7 +74,7 @@ export default function AdminSignals() {
   };
 
   const remove = async (x: AdminSignal) => {
-    if (!confirm(ts.confirmDelete(x.code))) return;
+    if (!(await ask(ts.confirmDelete(x.code), { confirmLabel: t.common.delete, cancelLabel: t.common.cancel, danger: true }))) return;
     setError(null);
     try {
       await deleteSignal(x.id);
@@ -216,6 +218,7 @@ export default function AdminSignals() {
         </table>
         {rows?.length === 0 && <div className={s.empty}>{ts.empty}</div>}
       </div>
+      {dialog}
     </>
   );
 }
