@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type AuditAction = 'create' | 'update' | 'delete' | 'publish' | 'unpublish';
-export type AuditEntity = 'category' | 'signal' | 'quiz' | 'brand';
+export type AuditEntity = 'category' | 'signal' | 'quiz' | 'brand' | 'test_email';
 
 export interface AuditEntry {
   /** null = change made via the data CLI (no user); `via: 'cli'` is recorded in changes. */

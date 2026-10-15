@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Copy, Eye, FilePenLine, Languages, Settings2 } from 'lucide-react';
 import { IconHeading } from '@/components/icon-heading';
+import { useConfirm } from '@/components/confirm-dialog';
 import { SelectInput } from '@/components/select-input';
 import { EDITABLE_QUIZ_KINDS, collectHotspots } from '@redflag/shared';
 import {
@@ -112,6 +113,7 @@ const langLabel = (t: AdminStrings, l: Locale) => t.common.langName[l];
 export function QuizEditor({ id }: { id?: string }) {
   const router = useRouter();
   const { t: ta, locale: ui, href } = useAdmin();
+  const { ask, dialog } = useConfirm();
   const te = ta.editor;
   const nameOf = nameIn(ui);
   const [form, setForm] = useState<Form | null>(id ? null : newForm());
@@ -210,13 +212,17 @@ export function QuizEditor({ id }: { id?: string }) {
     .filter(([, sig]) => !answer.includes(sig))
     .map(([k]) => k);
 
-  const changeKind = (kind: string) => {
+  const changeKind = async (kind: string) => {
     const hasContent = LOCALES.some(
       (l) =>
         JSON.stringify(cleanScenario(form.kind, form.translations[l].scenarioData)) !==
         JSON.stringify(cleanScenario(form.kind, emptyScenario(form.kind))),
     );
-    if (hasContent && !confirm(te.confirmChangeKind)) return;
+    if (
+      hasContent &&
+      !(await ask(te.confirmChangeKind, { confirmLabel: ta.common.confirm, cancelLabel: ta.common.cancel }))
+    )
+      return;
     setForm({
       ...form,
       kind,
@@ -228,12 +234,16 @@ export function QuizEditor({ id }: { id?: string }) {
     setPicked([]);
   };
 
-  const copyEnToVi = () => {
+  const copyEnToVi = async () => {
     const vi = form.translations.vi;
     const viEmpty =
       JSON.stringify(cleanScenario(form.kind, vi.scenarioData)) ===
       JSON.stringify(cleanScenario(form.kind, emptyScenario(form.kind)));
-    if (!viEmpty && !confirm(te.confirmCopy)) return;
+    if (
+      !viEmpty &&
+      !(await ask(te.confirmCopy, { confirmLabel: ta.common.confirm, cancelLabel: ta.common.cancel }))
+    )
+      return;
     updateText('vi', {
       scenarioData: structuredClone(form.translations.en.scenarioData),
     });
@@ -295,8 +305,15 @@ export function QuizEditor({ id }: { id?: string }) {
       setStatus('draft');
       setNotice({ text: te.unpublishedNotice, issues: [] });
     });
-  const onDelete = () => {
-    if (!confirm(te.confirmDelete)) return;
+  const onDelete = async () => {
+    if (
+      !(await ask(te.confirmDelete, {
+        confirmLabel: ta.common.delete,
+        cancelLabel: ta.common.cancel,
+        danger: true,
+      }))
+    )
+      return;
     run(async () => {
       await deleteQuiz(id!);
       setSaved(JSON.stringify(form)); // avoid the beforeunload warning
@@ -648,6 +665,7 @@ export function QuizEditor({ id }: { id?: string }) {
           )}
         </div>
       </div>
+      {dialog}
     </SignalCtx.Provider>
   );
 }

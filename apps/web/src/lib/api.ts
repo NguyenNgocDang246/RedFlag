@@ -122,6 +122,11 @@ export interface Brand {
   hotlines: string[];
   apps: string[];
   socialPages: string[];
+  paymentAccounts: string[];
+  legalNames: string[];
+  taxCodes: string[];
+  addresses: string[];
+  shortCodes: string[];
 }
 
 /** New practice round (client) — for the "Continue 10 more" button. */
@@ -345,6 +350,8 @@ export type TestFrequencyLevel = 'low' | 'medium' | 'high';
 export interface TestStatus {
   state: 'on' | 'paused' | 'off';
   frequency: TestFrequencyLevel | null;
+  /** Set when the system, not the user, switched tests off. */
+  stoppedReason?: 'bounced' | 'complained' | null;
 }
 
 export interface TestWarning {

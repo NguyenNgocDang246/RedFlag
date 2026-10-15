@@ -8,7 +8,7 @@ import {
   parseAdminEmails,
   stripNotes,
 } from '@redflag/shared';
-import { quizIssues, scenarioToText, type QuizDraft } from './quiz-rules';
+import { quizHints, quizIssues, scenarioToText, type QuizDraft } from './quiz-rules';
 
 /** A valid note: long enough and unique per key. */
 const N = (k: string) =>
@@ -161,6 +161,106 @@ describe('hotspotHints', () => {
       messages: [{ text: 'gấp', signal: 'URGENCY', note: N('k3') }],
     };
     expect(hotspotHints({ signalCodes: ['URGENCY'], scenarioData: data })).toEqual([]);
+  });
+
+  // Band theo mức — docs/simulation-design.md §1c. Không có mức thì bỏ qua các luật này.
+  const twoDecoys = {
+    sender: { text: 'TelNet', signal: 'SENDER_MISMATCH', note: N('b1') },
+    messages: [
+      { text: 'gấp', signal: 'URGENCY', note: N('b2') },
+      { text: 'link', signal: 'LOOKALIKE_DOMAIN', note: N('b3') },
+    ],
+  };
+
+  it('mức 1 với 2 mồi thì không gợi ý gì', () => {
+    expect(
+      hotspotHints({
+        signalCodes: ['LOOKALIKE_DOMAIN'],
+        scenarioData: twoDecoys,
+        difficultyLevel: 1,
+        isScam: true,
+      }),
+    ).toEqual([]);
+  });
+
+  it('mức 3 cần ít nhất 4 mồi', () => {
+    expect(
+      hotspotHints({
+        signalCodes: ['LOOKALIKE_DOMAIN'],
+        scenarioData: twoDecoys,
+        difficultyLevel: 3,
+        isScam: true,
+      }).join(),
+    ).toMatch(/ít nhất 4 mồi/);
+  });
+
+  it('không có sàn cho số dấu hiệu — một dấu hiệu là hợp lệ', () => {
+    const hints = hotspotHints({
+      signalCodes: ['LOOKALIKE_DOMAIN'],
+      scenarioData: twoDecoys,
+      difficultyLevel: 2,
+      isScam: true,
+    });
+    expect(hints.join()).not.toMatch(/dấu hiệu/);
+  });
+
+  it('mức 3 chỉ cho tối đa 2 dấu hiệu đáp án', () => {
+    const data = {
+      sender: { text: 'TelNet', signal: 'SENDER_MISMATCH', note: N('c1') },
+      messages: [
+        { text: 'a', signal: 'URGENCY', note: N('c2') },
+        { text: 'b', signal: 'LOOKALIKE_DOMAIN', note: N('c3') },
+        { text: 'c', signal: 'OFF_CHANNEL', note: N('c4') },
+        { text: 'd', signal: 'TOO_GOOD', note: N('c5') },
+        { text: 'e', signal: 'PAYMENT_CHANGE', note: N('c6') },
+        { text: 'f', signal: 'HIDDEN_LINK', note: N('c7') },
+      ],
+    };
+    expect(
+      hotspotHints({
+        signalCodes: ['URGENCY', 'LOOKALIKE_DOMAIN', 'OFF_CHANNEL'],
+        scenarioData: data,
+        difficultyLevel: 3,
+        isScam: true,
+      }).join(),
+    ).toMatch(/tối đa 2 dấu hiệu/);
+  });
+
+  it('bài an toàn dùng band riêng, không xét dấu hiệu', () => {
+    expect(
+      hotspotHints({
+        signalCodes: [],
+        scenarioData: twoDecoys,
+        difficultyLevel: 3,
+        isScam: false,
+      }),
+    ).toEqual([]);
+  });
+});
+
+describe('quizHints', () => {
+  const draft = (difficultyLevel?: number): QuizDraft => ({
+    kind: 'sms_inspection',
+    isScam: true,
+    signalCodes: ['LOOKALIKE_DOMAIN'],
+    difficultyLevel,
+    translations: {
+      vi: {
+        prompt: 'p',
+        explanation: 'e',
+        scenarioData: sms([['link', 'LOOKALIKE_DOMAIN']]),
+      },
+    },
+  });
+
+  it('gắn nhãn locale vào từng gợi ý', () => {
+    const hints = quizHints(draft(1));
+    expect(hints.every((h) => h.startsWith('[VI]'))).toBe(true);
+    expect(hints.join()).toMatch(/ít nhất 2 mồi/);
+  });
+
+  it('không có difficultyLevel thì bỏ qua band', () => {
+    expect(quizHints(draft()).join()).not.toMatch(/mồi, bài này|ít nhất/);
   });
 });
 

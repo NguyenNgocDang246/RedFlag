@@ -11,10 +11,13 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { InboundReportService } from './inbound-report.service';
+import { MailFeedbackService } from './mail-feedback.service';
 import { verifySvix } from './svix-verify';
 
 /**
- * Resend's inbound webhook: mail forwarded to REPORT_EMAIL arrives here as metadata only.
+ * Resend's webhook. One endpoint, several event types:
+ * - `email.received`: mail forwarded to REPORT_EMAIL, as metadata only.
+ * - `email.bounced` / `email.complained`: a test email bounced or was marked as spam.
  *
  * Public by necessity, so the Svix signature over the raw body is what authorises a call. Nothing
  * about the mail is logged or stored — only whether it matched a campaign (R2).
@@ -24,7 +27,10 @@ export class InboundController {
   private readonly logger = new Logger(InboundController.name);
   private warnedNoSecret = false;
 
-  constructor(private readonly inbound: InboundReportService) {}
+  constructor(
+    private readonly inbound: InboundReportService,
+    private readonly feedback: MailFeedbackService,
+  ) {}
 
   @Post('resend')
   @HttpCode(200)
@@ -53,8 +59,14 @@ export class InboundController {
       return { ok: true };
     }
 
-    // Always 200 once the signature holds: an unmatched forward is a normal outcome, not something
-    // Resend should keep retrying.
+    // Always 200 once the signature holds: an unmatched forward or an unknown message id is a normal
+    // outcome, not something Resend should keep retrying.
+    const type = (event as { type?: unknown } | null)?.type;
+    if (MailFeedbackService.handles(type)) {
+      await this.feedback.handle(event as Parameters<MailFeedbackService['handle']>[0]);
+      return { ok: true };
+    }
+
     const outcome = await this.inbound.handle(event as Parameters<InboundReportService['handle']>[0]);
     if (outcome.result === 'matched') {
       this.logger.log(`Forwarded report matched campaign ${outcome.campaignId}`);

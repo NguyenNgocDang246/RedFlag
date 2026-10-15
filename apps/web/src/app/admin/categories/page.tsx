@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { FolderTree, Plus } from 'lucide-react';
 import { IconHeading } from '@/components/icon-heading';
+import { useConfirm } from '@/components/confirm-dialog';
 import {
   createCategory,
   deleteCategory,
@@ -27,6 +28,7 @@ const blank = (): Draft => ({
 
 export default function AdminCategories() {
   const { t, locale } = useAdmin();
+  const { ask, dialog } = useConfirm();
   const tc = t.categories;
   const [rows, setRows] = useState<AdminCategory[] | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -98,7 +100,7 @@ export default function AdminCategories() {
   };
 
   const remove = async (c: AdminCategory) => {
-    if (!confirm(tc.confirmDelete(c.code))) return;
+    if (!(await ask(tc.confirmDelete(c.code), { confirmLabel: t.common.delete, cancelLabel: t.common.cancel, danger: true }))) return;
     setError(null);
     try {
       await deleteCategory(c.id);
@@ -265,6 +267,7 @@ export default function AdminCategories() {
         </table>
         {rows?.length === 0 && <div className={s.empty}>{tc.empty}</div>}
       </div>
+      {dialog}
     </>
   );
 }

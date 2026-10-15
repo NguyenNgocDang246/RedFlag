@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { Locale, TestFrequency } from '@prisma/client';
+import { Locale, TestFrequency, TestStopReason } from '@prisma/client';
 import { MailService } from '../../mail/mail.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CONFIRMATION_TEXT_VERSION, confirmationMatches, expectedPhrase } from '../confirmation';
@@ -47,7 +47,12 @@ export class TestSettingsService {
       this.prisma.consent.findFirst({ where: { userId, type: 'test_flow', revokedAt: null } }),
     ]);
     const state: TestState = optin?.enabled ? 'on' : consent && optin ? 'paused' : 'off';
-    return { state, frequency: optin && optin.frequency !== TestFrequency.off ? optin.frequency : null };
+    return {
+      state,
+      frequency: optin && optin.frequency !== TestFrequency.off ? optin.frequency : null,
+      // Only meaningful while tests are not on: why the system switched them off.
+      stoppedReason: state === 'on' ? null : (optin?.stoppedReason ?? null),
+    };
   }
 
   /**
@@ -74,7 +79,7 @@ export class TestSettingsService {
       this.prisma.userTestOptin.upsert({
         where: { userId },
         create: { userId, enabled: true, frequency: freq, timezone: tz },
-        update: { enabled: true, frequency: freq, ...(tz ? { timezone: tz } : {}) },
+        update: { enabled: true, frequency: freq, stoppedReason: null, ...(tz ? { timezone: tz } : {}) },
       }),
       this.prisma.consent.create({
         data: { userId, type: 'test_flow', textVersion: CONFIRMATION_TEXT_VERSION, locale, confirmationText },
@@ -120,7 +125,7 @@ export class TestSettingsService {
     const frequency = optin.frequency === TestFrequency.off ? TestFrequency.medium : optin.frequency;
     await this.prisma.userTestOptin.update({
       where: { userId },
-      data: { enabled: true, frequency },
+      data: { enabled: true, frequency, stoppedReason: null },
     });
     return { enabled: true, frequency };
   }
@@ -140,6 +145,37 @@ export class TestSettingsService {
     ]);
     await this.recallHandedOff(userId);
     return { enabled: false, unsubscribed: true };
+  }
+
+  /**
+   * Switches tests off because of the mail provider, not the user (R1):
+   * - `complained` (they marked a test as spam) = unsubscribe: consent revoked, a fresh opt-in needed.
+   * - `bounced` (the address cannot receive mail) = pause: consent kept, they can resume.
+   * The reason is kept so the settings page can say why.
+   */
+  async stopBySystem(userId: string, reason: TestStopReason) {
+    const optin = await this.prisma.userTestOptin.findUnique({ where: { userId } });
+    if (!optin) return;
+    await this.prisma.$transaction([
+      this.prisma.userTestOptin.update({
+        where: { userId },
+        data:
+          reason === TestStopReason.complained
+            ? { enabled: false, frequency: TestFrequency.off, stoppedReason: reason }
+            : { enabled: false, stoppedReason: reason },
+      }),
+      ...(reason === TestStopReason.complained
+        ? [
+            this.prisma.consent.updateMany({
+              where: { userId, type: 'test_flow', revokedAt: null },
+              data: { revokedAt: new Date() },
+            }),
+          ]
+        : []),
+      this.cancelPending(userId),
+    ]);
+    await this.recallHandedOff(userId);
+    this.logger.log(`Tests stopped for a user: ${reason}`);
   }
 
   /** Tests planned but not sent yet are dropped right away (R1) — the worker also re-checks before sending. */

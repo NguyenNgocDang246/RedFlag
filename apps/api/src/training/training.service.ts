@@ -273,9 +273,21 @@ export class TrainingService {
     const q = filter.q?.trim().toLowerCase();
     const matches = (b: (typeof rows)[number]) =>
       !q ||
-      [b.name, b.code, ...b.websites, ...b.emailDomains, ...b.smsSenders, ...b.hotlines, ...b.apps, ...b.socialPages].some(
-        (v) => v.toLowerCase().includes(q),
-      );
+      [
+        b.name,
+        b.code,
+        ...b.websites,
+        ...b.emailDomains,
+        ...b.smsSenders,
+        ...b.hotlines,
+        ...b.apps,
+        ...b.socialPages,
+        ...b.paymentAccounts,
+        ...b.legalNames,
+        ...b.taxCodes,
+        ...b.addresses,
+        ...b.shortCodes,
+      ].some((v) => v.toLowerCase().includes(q));
     return rows.filter(matches).map((b) => ({
       code: b.code,
       name: b.name,
@@ -289,6 +301,11 @@ export class TrainingService {
       hotlines: b.hotlines,
       apps: b.apps,
       socialPages: b.socialPages,
+      paymentAccounts: b.paymentAccounts,
+      legalNames: b.legalNames,
+      taxCodes: b.taxCodes,
+      addresses: b.addresses,
+      shortCodes: b.shortCodes,
     }));
   }
 

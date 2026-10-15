@@ -14,13 +14,14 @@ Một repo, hai project Vercel: `redflag-api` (thư mục `apps/api`) và `redfl
 1. **Neon** (neon.tech): tạo project, nên chọn region Singapore. Lấy hai chuỗi kết nối:
    - *Pooled* (host có `-pooler`): thêm `&pgbouncer=true&connection_limit=1`. Đây là `DATABASE_URL` cho Vercel.
    - *Direct* (host không có `-pooler`): chỉ dùng để chạy migrate từ máy mình.
-2. Chạy migrate và seed vào Neon từ máy local (PowerShell):
+2. Chạy migrate vào Neon từ máy local (PowerShell):
    ```powershell
    $env:DATABASE_URL = "<direct URL>"
    pnpm --filter @redflag/api exec prisma migrate deploy
-   pnpm --filter @redflag/api db:seed
    Remove-Item Env:DATABASE_URL
    ```
+   Không có bước seed: tín hiệu, chủ đề, thương hiệu và bài train là **nội dung**, tạo
+   qua data CLI (`pnpm --filter @redflag/api data`) hoặc trang admin.
 3. **Upstash Redis** (không bắt buộc): tạo database, lấy URL dạng `rediss://...`. Nếu không có, rate limit chỉ đếm trong RAM của từng instance, nên lỏng hơn.
 4. **Resend**: verify domain gửi (SPF, DKIM, DMARC) và tạo API key.
 5. Tạo hai chuỗi ngẫu nhiên cho `SESSION_SECRET` và `CRON_SECRET`:
@@ -51,7 +52,7 @@ Environment Variables (`<web>` là domain của project web, ví dụ `redflag-w
 | `MAIL_FROM` | `RedFlag <no-reply@domain-đã-verify>` |
 | `ADMIN_EMAILS` | email admin |
 | `SEND_WINDOW_START`, `SEND_WINDOW_END` | khung giờ được phép gửi mail test, tính theo giờ của người nhận (mặc định 8 và 20, không bắt buộc) |
-| `REPORT_EMAIL`, `RESEND_WEBHOOK_SECRET` | nếu dùng tính năng chuyển tiếp mail để báo cáo |
+| `REPORT_EMAIL`, `RESEND_WEBHOOK_SECRET` | nhận báo cáo qua mail chuyển tiếp, và xử lý mail bị trả về / bị đánh dấu spam |
 | `WEB_PUBLIC_URL` | `https://<web>` |
 | `API_PUBLIC_URL` | `https://<web>` (người dùng gọi API qua domain web) |
 | `TRACKING_PUBLIC_URL` | domain tracking riêng, hoặc `https://<api>` |
@@ -81,7 +82,7 @@ Deploy xong, nếu domain web khác với giá trị đã điền tạm ở bư�
 ## 4. Sau khi deploy
 
 - Google Cloud Console → OAuth client → thêm Authorized redirect URI: `https://<web>/api/auth/google/callback`.
-- Resend inbound (nếu dùng): webhook trỏ về `https://<web>/api/inbound/resend`.
+- Resend webhook: trỏ về `https://<web>/api/inbound/resend`, bật 3 sự kiện `email.received`, `email.bounced`, `email.complained` trên cùng một webhook (dùng chung `RESEND_WEBHOOK_SECRET`). Mail bị trả về hẳn thì tạm dừng test của người đó, bị đánh dấu spam thì tắt hẳn.
 - Vercel → `redflag-api` → Settings → Cron Jobs: phải thấy `/api/cron/daily`.
 
 ## 5. Kiểm tra

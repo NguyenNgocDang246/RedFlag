@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { MailCheck, UserPlus } from 'lucide-react';
+import { MailCheck } from 'lucide-react';
 import { ApiError, register, type Locale } from '@/lib/api';
 import { AUTH_T } from '@/lib/i18n';
 import { AuthCard, authStyles as s, EmailField, isEmail, PasswordField } from '@/components/auth-ui';
@@ -53,7 +53,7 @@ export function RegisterForm({ locale, google }: { locale: Locale; google: boole
   }
 
   return (
-    <AuthCard icon={<UserPlus size={26} />} title={t.registerTitle}>
+    <AuthCard title={t.registerTitle}>
       {google && <GoogleButton locale={locale} />}
       <form onSubmit={submit} noValidate>
         {error && (
@@ -61,7 +61,7 @@ export function RegisterForm({ locale, google }: { locale: Locale; google: boole
             {error}
           </p>
         )}
-        <EmailField label={t.email} value={email} onChange={setEmail} />
+        <EmailField label={t.email} value={email} onChange={setEmail} placeholder={t.emailPlaceholder} />
         <PasswordField
           label={t.password}
           hint={t.passwordHint}
@@ -70,6 +70,7 @@ export function RegisterForm({ locale, google }: { locale: Locale; google: boole
           showText={t.showPassword}
           hideText={t.hidePassword}
           autoComplete="new-password"
+          placeholder={t.createPasswordPlaceholder}
         />
         <button className={`btn btn-primary btn-lg ${s.submit}`} type="submit" disabled={busy}>
           {busy ? t.working : t.registerBtn}

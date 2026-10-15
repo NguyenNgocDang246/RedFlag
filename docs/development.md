@@ -29,9 +29,8 @@ cp .env.example .env
 # 3. Bật hạ tầng (Postgres, Redis, Mailpit)
 pnpm infra:up
 
-# 4. Tạo schema DB + seed nội dung mẫu (song ngữ EN/VI)
+# 4. Tạo schema DB
 pnpm --filter @redflag/api prisma:migrate   # apply migrations
-pnpm --filter @redflag/api db:seed          # seed Catalog
 
 # 5. Chạy — CÁCH 1: chung 1 terminal (tự build shared trước)
 pnpm dev

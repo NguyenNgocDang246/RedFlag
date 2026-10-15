@@ -3,7 +3,6 @@
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { KeyRound } from 'lucide-react';
 import { ApiError, login, type Locale } from '@/lib/api';
 import { AUTH_T } from '@/lib/i18n';
 import { AuthCard, authStyles as s, EmailField, isEmail, PasswordField } from '@/components/auth-ui';
@@ -66,7 +65,7 @@ export function LoginForm({
   };
 
   return (
-    <AuthCard icon={<KeyRound size={26} />} title={t.loginTitle} sub={t.loginSub}>
+    <AuthCard title={t.loginTitle} sub={t.loginSub}>
       {google && <GoogleButton locale={locale} next={next} />}
       <form onSubmit={submit} noValidate>
         {error && (
@@ -96,7 +95,7 @@ export function LoginForm({
             </div>
           </div>
         )}
-        <EmailField label={t.email} value={email} onChange={setEmail} />
+        <EmailField label={t.email} value={email} onChange={setEmail} placeholder={t.emailPlaceholder} />
         <PasswordField
           label={t.password}
           value={password}
@@ -104,6 +103,7 @@ export function LoginForm({
           showText={t.showPassword}
           hideText={t.hidePassword}
           autoComplete="current-password"
+          placeholder={t.passwordPlaceholder}
         />
         <button className={`btn btn-primary btn-lg ${s.submit}`} type="submit" disabled={busy}>
           {busy ? t.working : t.loginBtn}

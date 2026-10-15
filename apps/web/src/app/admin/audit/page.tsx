@@ -11,6 +11,7 @@ import { useAdmin } from '../use-admin';
 
 const LINK: Record<string, (id: string) => string> = {
   quiz: (id) => `/admin/quiz/${id}`,
+  test_email: (id) => `/admin/test-emails/${id}`,
 };
 
 /** Changes via the data CLI (`pnpm --filter @redflag/api data …`) have no user — marked `via: 'cli'`. */

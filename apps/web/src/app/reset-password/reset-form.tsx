@@ -81,6 +81,7 @@ export function ResetForm({ locale, token }: { locale: Locale; token?: string })
           hint={t.passwordHint}
           value={password}
           onChange={setPassword}
+          placeholder={t.newPasswordPlaceholder}
           showText={t.showPassword}
           hideText={t.hidePassword}
           autoComplete="new-password"
@@ -89,6 +90,7 @@ export function ResetForm({ locale, token }: { locale: Locale; token?: string })
           label={t.confirmPassword}
           value={again}
           onChange={setAgain}
+          placeholder={t.confirmPasswordPlaceholder}
           showText={t.showPassword}
           hideText={t.hidePassword}
           autoComplete="new-password"

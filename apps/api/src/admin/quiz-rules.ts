@@ -4,6 +4,7 @@ import {
   checkQuizHotspots,
   checkScenarioShape,
   collectHotspots,
+  hotspotHints,
   type Locale,
   type RuleMode,
 } from '@redflag/shared';
@@ -21,6 +22,8 @@ export interface QuizDraft {
   isScam: boolean;
   signalCodes: string[];
   categoryCode?: string | null;
+  /** Drives the per-level signal/decoy bands in `quizHints` — omit and those checks are skipped. */
+  difficultyLevel?: number;
   translations: Partial<Record<Locale, QuizText>>;
 }
 
@@ -79,6 +82,30 @@ export function quizIssues(
     if (strayHotspots.length) issues.push(`${tag} ${m.strayHotspot(strayHotspots)}`);
   }
   return issues;
+}
+
+/**
+ * Non-blocking suggestions, per locale. Never blocks publishing — these are the authoring-quality
+ * bands from docs/simulation-design.md §1c (how many answer signals and decoys a level wants).
+ */
+export function quizHints(q: QuizDraft, opts: RuleOpts = CLI_RULES): string[] {
+  const hints: string[] = [];
+  for (const locale of SUPPORTED_LOCALES) {
+    const t = q.translations[locale];
+    if (!t) continue;
+    for (const h of hotspotHints(
+      {
+        signalCodes: q.signalCodes,
+        scenarioData: t.scenarioData,
+        difficultyLevel: q.difficultyLevel,
+        isScam: q.isScam,
+      },
+      opts.ui,
+    )) {
+      hints.push(`[${locale.toUpperCase()}] ${h}`);
+    }
+  }
+  return hints;
 }
 
 /** Flat text (SEO + fallback) built from scenarioData: all text segments joined in order. */

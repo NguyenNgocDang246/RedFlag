@@ -18,6 +18,7 @@ import { BrandAdminService } from './brand-admin.service';
 import { CreateBrandDto, UpdateBrandDto } from './dto/brand.dto';
 import { StatusDto } from './dto/common.dto';
 import { SaveQuizDto } from './dto/quiz.dto';
+import { SaveTestEmailDto } from './dto/test-email.dto';
 import {
   CreateCategoryDto,
   CreateSignalDto,
@@ -55,20 +56,68 @@ export class AdminController {
     return this.testEmails.list(ui);
   }
 
+  @Get('test-emails/:id')
+  getTestEmail(@Param('id') id: string, @UiLocale() ui: 'en' | 'vi') {
+    return this.testEmails.get(id, ui);
+  }
+
+  @Post('test-emails')
+  createTestEmail(
+    @CurrentUser() user: AuthedUser,
+    @Body() dto: SaveTestEmailDto,
+    @UiLocale() ui: 'en' | 'vi',
+  ) {
+    return this.testEmails.create(dto, user.id, ui);
+  }
+
+  /** Saves the whole template. Emails already sent to learners are kept as they are. */
+  @Put('test-emails/:id')
+  updateTestEmail(
+    @CurrentUser() user: AuthedUser,
+    @Param('id') id: string,
+    @Body() dto: SaveTestEmailDto,
+    @UiLocale() ui: 'en' | 'vi',
+  ) {
+    return this.testEmails.update(id, dto, user.id, ui);
+  }
+
+  @Patch('test-emails/:id/status')
+  setTestEmailStatus(
+    @CurrentUser() user: AuthedUser,
+    @Param('id') id: string,
+    @Body() dto: StatusDto,
+    @UiLocale() ui: 'en' | 'vi',
+  ) {
+    return this.testEmails.setStatus(id, dto.status, user.id, ui);
+  }
+
+  @Delete('test-emails/:id')
+  deleteTestEmail(
+    @CurrentUser() user: AuthedUser,
+    @Param('id') id: string,
+    @UiLocale() ui: 'en' | 'vi',
+  ) {
+    return this.testEmails.remove(id, user.id, ui);
+  }
+
   /** Renders a test email exactly as it would arrive, without sending anything. */
   @Get('test-emails/:variantId/preview')
   previewTestEmail(@Param('variantId') variantId: string, @UiLocale() ui: 'en' | 'vi') {
     return this.testEmails.preview(variantId, ui);
   }
 
-  /** Sends it to the signed-in admin's own address — there is no way to name another recipient. */
+  /**
+   * Sends it to the signed-in admin's own address — there is no way to name another recipient.
+   * `locale` in the body picks the language of the email (default: the admin UI's).
+   */
   @Post('test-emails/:variantId/send-to-me')
   sendTestEmailToSelf(
     @CurrentUser() user: AuthedUser,
     @Param('variantId') variantId: string,
     @UiLocale() ui: 'en' | 'vi',
+    @Body('locale') locale?: string,
   ) {
-    return this.testEmails.sendToSelf(variantId, user.id, ui);
+    return this.testEmails.sendToSelf(variantId, user.id, locale === 'en' || locale === 'vi' ? locale : ui);
   }
 
   // ─── Category ───

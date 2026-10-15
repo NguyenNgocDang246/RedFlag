@@ -26,6 +26,23 @@ const HANDOFF_HORIZON_MS = 25 * 60 * 60 * 1000;
 /** Anything due sooner than this is just sent now. */
 const SCHEDULE_MIN_LEAD_MS = 60 * 1000;
 
+/** A send that keeps failing is given up after this many tries (R8). */
+export const MAX_SEND_ATTEMPTS = 5;
+
+/** Wait before try n+1, after n failures: 2, 10, 30, 60 minutes. */
+const RETRY_BACKOFF_MS = [2, 10, 30, 60].map((m) => m * 60 * 1000);
+
+/** When a campaign that just failed for the `attempts`-th time may be tried again. */
+export function nextRetryAt(attempts: number, now: Date): Date {
+  const wait = RETRY_BACKOFF_MS[Math.min(attempts, RETRY_BACKOFF_MS.length) - 1];
+  return new Date(now.getTime() + wait);
+}
+
+/** Due campaigns that are not waiting out a retry backoff. */
+const notBackingOff = (now: Date): Prisma.CampaignWhereInput => ({
+  OR: [{ retryAt: null }, { retryAt: { lte: now } }],
+});
+
 /** Unguessable, carries no user data (R5). */
 const newToken = () => randomBytes(24).toString('base64url');
 
@@ -42,7 +59,7 @@ export class DeliveryService {
   /** Sends every test that has come due. Safe to run concurrently: each campaign is claimed once. */
   async sendDue(now = new Date()): Promise<number> {
     const due = await this.prisma.campaign.findMany({
-      where: { status: 'scheduled', scheduledAt: { lte: now } },
+      where: { status: 'scheduled', scheduledAt: { lte: now }, ...notBackingOff(now) },
       orderBy: { scheduledAt: 'asc' },
       take: BATCH,
       select: { id: true, scheduledAt: true },
@@ -77,7 +94,12 @@ export class DeliveryService {
 
     while (Date.now() - started < budgetMs) {
       const due = await this.prisma.campaign.findMany({
-        where: { status: 'scheduled', scheduledAt: { lte: horizon }, id: { notIn: [...tried] } },
+        where: {
+          status: 'scheduled',
+          scheduledAt: { lte: horizon },
+          id: { notIn: [...tried] },
+          ...notBackingOff(now),
+        },
         orderBy: { scheduledAt: 'asc' },
         take: BATCH,
         select: { id: true, scheduledAt: true },
@@ -209,11 +231,40 @@ export class DeliveryService {
       ]);
       return true;
     } catch (e) {
-      // The campaign stays `scheduled` so a later pass can retry; the claim is released.
-      await this.prisma.delivery.delete({ where: { campaignId } }).catch(() => undefined);
       this.logger.error(`Failed to send campaign ${campaignId}: ${String(e)}`);
+      await this.recordFailure(campaignId, campaign.sendAttempts + 1);
       return false;
     }
+  }
+
+  /**
+   * A failed send is retried a few times with growing gaps, then given up (R8) — never retried on
+   * every tick forever. The tokens minted for the failed try are revoked: nobody received them.
+   */
+  private async recordFailure(campaignId: string, attempts: number) {
+    await this.prisma.trackingToken.updateMany({
+      where: { campaignId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    if (attempts >= MAX_SEND_ATTEMPTS) {
+      await this.prisma.$transaction([
+        this.prisma.campaign.update({
+          where: { id: campaignId },
+          data: { status: 'expired', sendAttempts: attempts, retryAt: null },
+        }),
+        this.prisma.delivery.update({ where: { campaignId }, data: { status: 'failed' } }),
+      ]);
+      this.logger.warn(`Gave up on campaign ${campaignId} after ${attempts} tries`);
+      return;
+    }
+    // Stays `scheduled`; the claim is released so the retry can take it again.
+    await this.prisma.$transaction([
+      this.prisma.campaign.update({
+        where: { id: campaignId },
+        data: { sendAttempts: attempts, retryAt: nextRetryAt(attempts, new Date()) },
+      }),
+      this.prisma.delivery.delete({ where: { campaignId } }),
+    ]);
   }
 
   private async failDelivery(campaignId: string, reason: string) {
