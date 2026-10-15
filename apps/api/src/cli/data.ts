@@ -3,13 +3,14 @@ import { readFileSync } from 'node:fs';
 import { HttpException, type INestApplicationContext } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { Locale } from '@prisma/client';
-import { EDITABLE_QUIZ_KINDS } from '@redflag/shared';
+import { collectDecoys, EDITABLE_QUIZ_KINDS } from '@redflag/shared';
 import { plainToInstance, type ClassConstructor } from 'class-transformer';
 import { validate, type ValidationError } from 'class-validator';
 import { BrandAdminService } from '../admin/brand-admin.service';
 import { CreateBrandDto, UpdateBrandDto } from '../admin/dto/brand.dto';
 import { SaveQuizDto } from '../admin/dto/quiz.dto';
 import { CreateCategoryDto, CreateSignalDto, UpdateCategoryDto, UpdateSignalDto } from '../admin/dto/taxonomy.dto';
+import { quizHints } from '../admin/quiz-rules';
 import { QuizAdminService } from '../admin/quiz-admin.service';
 import { TaxonomyService } from '../admin/taxonomy.service';
 import { loadEnv } from '../load-env';
@@ -31,7 +32,8 @@ quiz      list [--kind K] [--category C] [--status draft|published] [--q TEXT] [
           export <id|#số>               in JSON đúng dạng để sửa rồi update
           template <kind>               khung JSON cho bài mới (${EDITABLE_QUIZ_KINDS.join(', ')})
           check [<id|#số>] --file f.json  chỉ kiểm luật, không ghi (kèm <id> khi kiểm bản sửa của bài đó)
-          coverage                      số bài lừa/an toàn theo chủ đề, chủ đề nào lệch tỉ lệ 2:1
+                                        in kèm "hints": gợi ý số dấu hiệu/mồi theo mức, không chặn
+          coverage                      cân bằng kho: lừa/an toàn theo chủ đề, và dấu hiệu nào chưa có mồi đối trọng
           create --file f.json          tạo NHÁP
           update <id|#số> --file f.json
           publish <id|#số> | unpublish <id|#số>
@@ -188,7 +190,15 @@ async function run(app: INestApplicationContext, args: ParsedArgs) {
       });
     }
     case 'quiz coverage': {
-      const rows = await prisma.quizQuestion.findMany({ select: { isScam: true, status: true, category: { select: { code: true } } } });
+      const rows = await prisma.quizQuestion.findMany({
+        select: {
+          isScam: true,
+          status: true,
+          category: { select: { code: true } },
+          signals: { select: { signal: { select: { code: true } } } },
+          translations: { select: { scenarioData: true } },
+        },
+      });
       const by = new Map<string, { scam: number; safe: number }>();
       for (const r of rows) {
         const code = r.category?.code ?? '(không chủ đề)';
@@ -203,7 +213,40 @@ async function run(app: INestApplicationContext, args: ParsedArgs) {
           return { category, scam: c.scam, safe: c.safe, needSafe: Math.max(0, needSafe - c.safe), flag: c.safe === 0 ? 'chưa có bài an toàn' : c.safe < needSafe / 2 ? 'thiếu bài an toàn' : '' };
         })
         .sort((a, b) => b.needSafe - a.needSafe);
-      return print({ target: 'lừa : an toàn ≈ 2 : 1 theo chủ đề', items });
+
+      /**
+       * Per-signal balance. A signal the learner only ever meets as the right answer is a free
+       * giveaway: tap it, always score. The counterweight is the SAME signal appearing as a decoy
+       * (tapping it is then wrong) — in a safe quiz or as a decoy inside another scam quiz.
+       */
+      const sig = new Map<string, { asAnswer: number; asDecoy: number }>();
+      const bump = (code: string, key: 'asAnswer' | 'asDecoy') => {
+        const c = sig.get(code) ?? { asAnswer: 0, asDecoy: 0 };
+        c[key]++;
+        sig.set(code, c);
+      };
+      for (const r of rows) {
+        const codes = r.signals.map((s) => s.signal.code);
+        codes.forEach((c) => bump(c, 'asAnswer'));
+        const decoys = new Set<string>();
+        for (const t of r.translations) collectDecoys(t.scenarioData, codes).forEach((d) => decoys.add(d.signal));
+        decoys.forEach((c) => bump(c, 'asDecoy'));
+      }
+      const signals = [...sig.entries()]
+        .map(([signal, c]) => ({
+          signal,
+          asAnswer: c.asAnswer,
+          asDecoy: c.asDecoy,
+          flag: c.asAnswer > 0 && c.asDecoy === 0 ? 'chưa từng là mồi — chạm vào là luôn đúng' : c.asAnswer > c.asDecoy * 3 ? 'thiếu mồi đối trọng' : '',
+        }))
+        .sort((a, b) => (b.flag ? 1 : 0) - (a.flag ? 1 : 0) || b.asAnswer - a.asAnswer);
+
+      return print({
+        target: 'lừa : an toàn ≈ 2 : 1 theo chủ đề',
+        items,
+        signalTarget: 'mỗi dấu hiệu dùng làm đáp án phải có ít nhất một bài dùng nó làm mồi',
+        signals,
+      });
     }
     case 'quiz template':
       return print(quizTemplate(need(ref, `<kind> (${EDITABLE_QUIZ_KINDS.join(', ')})`)));
@@ -211,18 +254,21 @@ async function run(app: INestApplicationContext, args: ParsedArgs) {
       const plain = readJson(flags);
       // With <id|#số>, that quiz is excluded from the duplicate-note check (checking an edited export of itself).
       const excludeId = ref ? await quizId(ref) : undefined;
-      const issues = [...placeholderIssues(plain), ...(await quiz.check(await toDto(SaveQuizDto, plain), excludeId))];
-      return print({ ok: issues.length === 0, issues });
+      const dto = await toDto(SaveQuizDto, plain);
+      const issues = [...placeholderIssues(plain), ...(await quiz.check(dto, excludeId))];
+      // `hints` never block — they are the per-level signal/decoy bands (simulation-design.md §1c).
+      return print({ ok: issues.length === 0, issues, hints: quizHints(dto) });
     }
     case 'quiz create': {
       const plain = readJson(flags);
       const placeholders = placeholderIssues(plain);
       if (placeholders.length) throw new CliError('Bài còn chữ mẫu của template', placeholders);
       const dto = await toDto(SaveQuizDto, plain);
-      if (dryRun) return print({ dryRun: true, wouldCreate: 'draft', issues: await quiz.check(dto) });
+      const hints = quizHints(dto);
+      if (dryRun) return print({ dryRun: true, wouldCreate: 'draft', issues: await quiz.check(dto), hints });
       const res = await quiz.create(dto, null);
       const { number } = await quizSummary(res.id);
-      return print({ ...res, number, preview: `${webUrl()}/admin/quiz/${res.id}` });
+      return print({ ...res, number, hints, preview: `${webUrl()}/admin/quiz/${res.id}` });
     }
     case 'quiz update': {
       const id = await quizId(ref);
@@ -230,9 +276,11 @@ async function run(app: INestApplicationContext, args: ParsedArgs) {
       const placeholders = placeholderIssues(plain);
       if (placeholders.length) throw new CliError('Bài còn chữ mẫu của template', placeholders);
       const dto = await toDto(SaveQuizDto, plain);
-      if (dryRun) return print({ dryRun: true, wouldUpdate: await quizSummary(id), issues: await quiz.check(dto, id) });
+      const hints = quizHints(dto);
+      if (dryRun)
+        return print({ dryRun: true, wouldUpdate: await quizSummary(id), issues: await quiz.check(dto, id), hints });
       const res = await quiz.update(id, dto, null);
-      return print({ ...res, preview: `${webUrl()}/admin/quiz/${id}` });
+      return print({ ...res, hints, preview: `${webUrl()}/admin/quiz/${id}` });
     }
     case 'quiz publish':
     case 'quiz unpublish': {

@@ -1,7 +1,20 @@
 'use client';
 
 import { useId, useMemo, useState, type ComponentType } from 'react';
-import { Globe, Mail, MessageSquare, Phone, Search, Smartphone, Users } from 'lucide-react';
+import {
+  Building2,
+  Globe,
+  Hash,
+  Landmark,
+  Mail,
+  MapPin,
+  MessageSquare,
+  Phone,
+  Receipt,
+  Search,
+  Smartphone,
+  Users,
+} from 'lucide-react';
 import type { Brand, Locale } from '@/lib/api';
 import { HANDBOOK_T } from '@/lib/i18n';
 import { CategoryIcon } from '../train/category-icon';
@@ -14,10 +27,29 @@ const FIELDS: { key: keyof Brand; icon: ComponentType<{ size?: number; 'aria-hid
   { key: 'hotlines', icon: Phone },
   { key: 'apps', icon: Smartphone },
   { key: 'socialPages', icon: Users },
+  { key: 'paymentAccounts', icon: Landmark },
+  { key: 'legalNames', icon: Building2 },
+  { key: 'taxCodes', icon: Receipt },
+  { key: 'addresses', icon: MapPin },
+  { key: 'shortCodes', icon: Hash },
 ];
 
 const haystack = (b: Brand) =>
-  [b.name, b.code, ...b.websites, ...b.emailDomains, ...b.smsSenders, ...b.hotlines, ...b.apps, ...b.socialPages]
+  [
+    b.name,
+    b.code,
+    ...b.websites,
+    ...b.emailDomains,
+    ...b.smsSenders,
+    ...b.hotlines,
+    ...b.apps,
+    ...b.socialPages,
+    ...b.paymentAccounts,
+    ...b.legalNames,
+    ...b.taxCodes,
+    ...b.addresses,
+    ...b.shortCodes,
+  ]
     .join(' ')
     .toLowerCase();
 

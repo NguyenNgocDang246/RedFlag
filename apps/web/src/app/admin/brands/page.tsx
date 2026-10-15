@@ -34,6 +34,17 @@ const CHANNEL_PLACEHOLDER: Record<BrandChannel, Record<BrandLocale, string>> = {
     en: 'Northstar Mobile — Northstar Bank plc',
   },
   socialPages: { vi: 'facebook.com/saomaibank', en: 'facebook.com/northstarbank' },
+  paymentAccounts: {
+    vi: 'Sao Mai Bank — 1903 552 118',
+    en: 'Harbor Bank — 1903 552 118',
+  },
+  legalNames: {
+    vi: 'Ngân hàng TMCP Sao Mai',
+    en: 'Northstar Bank plc',
+  },
+  taxCodes: { vi: '0301234567', en: '81-1234567' },
+  addresses: { vi: '25 Lê Lợi, Quận 1, TP.HCM', en: '200 Harbor Avenue, Seattle, WA' },
+  shortCodes: { vi: '9123', en: '611' },
 };
 
 /** Each channel is a textarea, one value per line (app names may contain commas). */

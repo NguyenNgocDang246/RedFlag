@@ -403,6 +403,13 @@ model Brand {
   hotlines     String[]      @default([])
   apps         String[]      @default([]) // "App name — Publisher"
   socialPages  String[]      @default([])
+  // Fields below are the ones nobody thinks to look up — they are what makes a level-3
+  // quiz possible (docs/simulation-design.md §1).
+  paymentAccounts String[]   @default([]) // "Bank — account number"
+  legalNames      String[]   @default([]) // full name on the licence, shown as the account holder
+  taxCodes        String[]   @default([])
+  addresses       String[]   @default([]) // head office, branch, depot
+  shortCodes      String[]   @default([]) // SMS short code you send TO, e.g. 999
   order        Int           @default(0)
   status       ContentStatus @default(published)
   createdAt    DateTime      @default(now())

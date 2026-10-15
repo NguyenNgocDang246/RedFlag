@@ -57,6 +57,22 @@ export class UpdateBrandDto {
   @ChannelList()
   socialPages?: string[];
 
+  /** Fields nobody thinks to look up — what makes a level-3 quiz possible. */
+  @ChannelList()
+  paymentAccounts?: string[];
+
+  @ChannelList()
+  legalNames?: string[];
+
+  @ChannelList()
+  taxCodes?: string[];
+
+  @ChannelList()
+  addresses?: string[];
+
+  @ChannelList()
+  shortCodes?: string[];
+
   @IsOptional()
   @IsInt()
   @Min(0)

@@ -107,6 +107,11 @@ export const BRAND_CHANNELS = [
   'hotlines',
   'apps',
   'socialPages',
+  'paymentAccounts',
+  'legalNames',
+  'taxCodes',
+  'addresses',
+  'shortCodes',
 ] as const;
 export type BrandChannel = (typeof BRAND_CHANNELS)[number];
 
