@@ -20,7 +20,15 @@ function setupSwagger(app: INestApplication): void {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  // The UI's JS/CSS come from a CDN: on Vercel the function bundle doesn't carry the
+  // swagger-ui-dist files the module would otherwise serve from node_modules.
+  // Keep the version in step with the swagger-ui-dist that @nestjs/swagger installs.
+  const ui = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.13';
+  SwaggerModule.setup('api/docs', app, document, {
+    customSiteTitle: 'RedFlag API',
+    customCssUrl: `${ui}/swagger-ui.css`,
+    customJs: [`${ui}/swagger-ui-bundle.js`, `${ui}/swagger-ui-standalone-preset.js`],
+  });
 }
 
 /** HTTP setup shared by the long-running server (main.ts) and the Vercel function (serverless.ts). */
