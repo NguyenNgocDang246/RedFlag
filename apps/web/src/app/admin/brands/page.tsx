@@ -86,6 +86,10 @@ export default function AdminBrands() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // The header language is the admin's current language, so the brand tab follows it.
+  // A tab clicked by hand still wins — until the language is switched again.
+  useEffect(() => setTab(locale), [locale]);
+
   const load = useCallback(
     () =>
       listBrands()

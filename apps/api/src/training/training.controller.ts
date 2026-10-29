@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiCookieAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Locale } from '@prisma/client';
 import { DEFAULT_LOCALE, isSupportedLocale } from '@redflag/shared';
 import { OptionalUser } from '../identity/auth/current-user.decorator';
@@ -6,6 +7,15 @@ import { OptionalJwtGuard } from '../identity/auth/optional-jwt.guard';
 import type { AuthedUser } from '../identity/auth/jwt-auth.guard';
 import { AnswerQuizDto } from './dto/answer-quiz.dto';
 import { TrainingService } from './training.service';
+import { QuizQuestion } from '../common/responses.dto';
+import {
+  HandbookBrand,
+  LibraryNextResponse,
+  LibraryPageResponse,
+  PracticeRoundResponse,
+  QuizAnswerResult,
+  TrainingFacetsResponse,
+} from './dto/training-response.dto';
 
 function parseLocale(input?: string): Locale {
   return input && isSupportedLocale(input) ? (input as Locale) : DEFAULT_LOCALE;
@@ -30,6 +40,8 @@ function oneOf<T extends string>(input: string | undefined, allowed: readonly T[
  * Training (public, optional-auth): guests only see public quizzes (isPublic),
  * signed-in users see all. Everything is free — gated by sign-in, not payment.
  */
+@ApiTags('training')
+@ApiCookieAuth()
 @Controller('training')
 @UseGuards(OptionalJwtGuard)
 export class TrainingController {
@@ -51,7 +63,7 @@ export class TrainingController {
     @Query('limit') limit?: string,
     @Query('exclude') exclude?: string,
     @Query('ids') ids?: string,
-  ) {
+  ): Promise<PracticeRoundResponse> {
     const list = (v?: string) => (v ? v.split(',').filter(Boolean) : undefined);
     return this.training.listQuiz(parseLocale(locale), user?.id, {
       category,
@@ -78,7 +90,7 @@ export class TrainingController {
     @Query('q') q?: string,
     @Query('sort') sort?: string,
     @Query('dir') dir?: string,
-  ) {
+  ): Promise<LibraryPageResponse> {
     return this.training.library(parseLocale(locale), user?.id, {
       page: parseIntOr(page),
       category,
@@ -94,6 +106,7 @@ export class TrainingController {
 
   /** Next question after sequence number `after`, within the same filters (null if none). */
   @Get('library/next')
+  @ApiOkResponse({ type: LibraryNextResponse, description: 'null when there is no next question.' })
   nextInLibrary(
     @OptionalUser() user: AuthedUser | undefined,
     @Query('after') after?: string,
@@ -101,7 +114,7 @@ export class TrainingController {
     @Query('kind') kind?: string,
     @Query('signal') signal?: string,
     @Query('level') level?: string,
-  ) {
+  ): Promise<LibraryNextResponse | null> {
     return this.training.nextAfter(parseIntOr(after) ?? 0, Boolean(user), {
       category,
       kind,
@@ -112,7 +125,7 @@ export class TrainingController {
 
   /** Brand handbook: ?q=saomai&category=BANK */
   @Get('brands')
-  brands(@Query('locale') locale?: string, @Query('q') q?: string, @Query('category') category?: string) {
+  brands(@Query('locale') locale?: string, @Query('q') q?: string, @Query('category') category?: string): Promise<HandbookBrand[]> {
     return this.training.brands(parseLocale(locale), { q, category });
   }
 
@@ -122,7 +135,7 @@ export class TrainingController {
     @OptionalUser() user: AuthedUser | undefined,
     @Query('locale') locale?: string,
     @Query('level') level?: string,
-  ) {
+  ): Promise<TrainingFacetsResponse> {
     return this.training.facets(parseLocale(locale), Boolean(user), parseLevel(level));
   }
 
@@ -131,7 +144,7 @@ export class TrainingController {
     @OptionalUser() user: AuthedUser | undefined,
     @Param('id') id: string,
     @Query('locale') locale?: string,
-  ) {
+  ): Promise<QuizQuestion> {
     return this.training.getQuiz(id, parseLocale(locale), Boolean(user));
   }
 
@@ -142,7 +155,7 @@ export class TrainingController {
     @Param('id') id: string,
     @Body() dto: AnswerQuizDto,
     @Query('locale') locale?: string,
-  ) {
+  ): Promise<QuizAnswerResult> {
     return this.training.answerQuiz(
       id,
       dto.answeredScam,

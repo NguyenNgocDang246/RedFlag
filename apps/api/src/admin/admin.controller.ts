@@ -10,6 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../identity/auth/current-user.decorator';
 import type { AuthedUser } from '../identity/auth/jwt-auth.guard';
 import { AdminGuard } from './admin.guard';
@@ -30,6 +31,23 @@ import { TaxonomyService } from './taxonomy.service';
 import { TestEmailAdminService } from './test-email-admin.service';
 import type { RuleOpts } from './quiz-rules';
 import { UiLocale } from './ui-locale.decorator';
+import { IdResponse, OkResponse } from '../common/responses.dto';
+import {
+  AdminAuditEntry,
+  AdminBrand,
+  AdminCategory,
+  AdminQuizCreated,
+  AdminQuizDetail,
+  AdminQuizPage,
+  AdminSaveResult,
+  AdminSendToSelfResult,
+  AdminSignal,
+  AdminStatusResult,
+  AdminTestEmailDetail,
+  AdminTestEmailPreview,
+  AdminTestEmailSaved,
+  AdminTestEmailSummary,
+} from './dto/admin-response.dto';
 
 /** Admin UI edits: only the rules a quiz needs to work (authoring-quality rules are for the data CLI). */
 const adminRules = (ui: 'en' | 'vi'): RuleOpts => ({ ui, mode: 'basic' });
@@ -38,6 +56,8 @@ const adminRules = (ui: 'en' | 'vi'): RuleOpts => ({ ui, mode: 'basic' });
  * Content admin (Phase 3B) — replaces editing seed.ts (R6).
  * Every route requires the admin role; every change is audit-logged.
  */
+@ApiTags('admin')
+@ApiCookieAuth()
 @Controller('admin')
 @UseGuards(AdminGuard)
 export class AdminController {
@@ -52,12 +72,12 @@ export class AdminController {
   // ─── Test emails (Phase 4) ───
 
   @Get('test-emails')
-  listTestEmails(@UiLocale() ui: 'en' | 'vi') {
+  listTestEmails(@UiLocale() ui: 'en' | 'vi'): Promise<AdminTestEmailSummary[]> {
     return this.testEmails.list(ui);
   }
 
   @Get('test-emails/:id')
-  getTestEmail(@Param('id') id: string, @UiLocale() ui: 'en' | 'vi') {
+  getTestEmail(@Param('id') id: string, @UiLocale() ui: 'en' | 'vi'): Promise<AdminTestEmailDetail> {
     return this.testEmails.get(id, ui);
   }
 
@@ -66,7 +86,7 @@ export class AdminController {
     @CurrentUser() user: AuthedUser,
     @Body() dto: SaveTestEmailDto,
     @UiLocale() ui: 'en' | 'vi',
-  ) {
+  ): Promise<AdminTestEmailSaved> {
     return this.testEmails.create(dto, user.id, ui);
   }
 
@@ -77,7 +97,7 @@ export class AdminController {
     @Param('id') id: string,
     @Body() dto: SaveTestEmailDto,
     @UiLocale() ui: 'en' | 'vi',
-  ) {
+  ): Promise<AdminSaveResult> {
     return this.testEmails.update(id, dto, user.id, ui);
   }
 
@@ -87,7 +107,7 @@ export class AdminController {
     @Param('id') id: string,
     @Body() dto: StatusDto,
     @UiLocale() ui: 'en' | 'vi',
-  ) {
+  ): Promise<AdminStatusResult> {
     return this.testEmails.setStatus(id, dto.status, user.id, ui);
   }
 
@@ -96,13 +116,13 @@ export class AdminController {
     @CurrentUser() user: AuthedUser,
     @Param('id') id: string,
     @UiLocale() ui: 'en' | 'vi',
-  ) {
+  ): Promise<OkResponse> {
     return this.testEmails.remove(id, user.id, ui);
   }
 
   /** Renders a test email exactly as it would arrive, without sending anything. */
   @Get('test-emails/:variantId/preview')
-  previewTestEmail(@Param('variantId') variantId: string, @UiLocale() ui: 'en' | 'vi') {
+  previewTestEmail(@Param('variantId') variantId: string, @UiLocale() ui: 'en' | 'vi'): Promise<AdminTestEmailPreview> {
     return this.testEmails.preview(variantId, ui);
   }
 
@@ -116,19 +136,19 @@ export class AdminController {
     @Param('variantId') variantId: string,
     @UiLocale() ui: 'en' | 'vi',
     @Body('locale') locale?: string,
-  ) {
+  ): Promise<AdminSendToSelfResult> {
     return this.testEmails.sendToSelf(variantId, user.id, locale === 'en' || locale === 'vi' ? locale : ui);
   }
 
   // ─── Category ───
 
   @Get('categories')
-  listCategories() {
+  listCategories(): Promise<AdminCategory[]> {
     return this.taxonomy.listCategories();
   }
 
   @Post('categories')
-  createCategory(@CurrentUser() user: AuthedUser, @Body() dto: CreateCategoryDto) {
+  createCategory(@CurrentUser() user: AuthedUser, @Body() dto: CreateCategoryDto): Promise<IdResponse> {
     return this.taxonomy.createCategory(dto, user.id);
   }
 
@@ -137,24 +157,24 @@ export class AdminController {
     @CurrentUser() user: AuthedUser,
     @Param('id') id: string,
     @Body() dto: UpdateCategoryDto,
-  ) {
+  ): Promise<IdResponse> {
     return this.taxonomy.updateCategory(id, dto, user.id);
   }
 
   @Delete('categories/:id')
-  deleteCategory(@CurrentUser() user: AuthedUser, @Param('id') id: string) {
+  deleteCategory(@CurrentUser() user: AuthedUser, @Param('id') id: string): Promise<OkResponse> {
     return this.taxonomy.deleteCategory(id, user.id);
   }
 
   // ─── Signal ───
 
   @Get('signals')
-  listSignals() {
+  listSignals(): Promise<AdminSignal[]> {
     return this.taxonomy.listSignals();
   }
 
   @Post('signals')
-  createSignal(@CurrentUser() user: AuthedUser, @Body() dto: CreateSignalDto) {
+  createSignal(@CurrentUser() user: AuthedUser, @Body() dto: CreateSignalDto): Promise<IdResponse> {
     return this.taxonomy.createSignal(dto, user.id);
   }
 
@@ -163,12 +183,12 @@ export class AdminController {
     @CurrentUser() user: AuthedUser,
     @Param('id') id: string,
     @Body() dto: UpdateSignalDto,
-  ) {
+  ): Promise<IdResponse> {
     return this.taxonomy.updateSignal(id, dto, user.id);
   }
 
   @Delete('signals/:id')
-  deleteSignal(@CurrentUser() user: AuthedUser, @Param('id') id: string) {
+  deleteSignal(@CurrentUser() user: AuthedUser, @Param('id') id: string): Promise<OkResponse> {
     return this.taxonomy.deleteSignal(id, user.id);
   }
 
@@ -183,7 +203,7 @@ export class AdminController {
     @Query('status') status?: string,
     @Query('q') q?: string,
     @Query('page') page?: string,
-  ) {
+  ): Promise<AdminQuizPage> {
     return this.quiz.list(
       { kind, category, status, q, page: page ? Number.parseInt(page, 10) || 1 : 1 },
       adminRules(ui),
@@ -191,7 +211,7 @@ export class AdminController {
   }
 
   @Get('quiz/:id')
-  getQuiz(@Param('id') id: string, @UiLocale() ui: 'en' | 'vi') {
+  getQuiz(@Param('id') id: string, @UiLocale() ui: 'en' | 'vi'): Promise<AdminQuizDetail> {
     return this.quiz.get(id, adminRules(ui));
   }
 
@@ -200,7 +220,7 @@ export class AdminController {
     @CurrentUser() user: AuthedUser,
     @Body() dto: SaveQuizDto,
     @UiLocale() ui: 'en' | 'vi',
-  ) {
+  ): Promise<AdminQuizCreated> {
     return this.quiz.create(dto, user.id, adminRules(ui));
   }
 
@@ -210,7 +230,7 @@ export class AdminController {
     @Param('id') id: string,
     @Body() dto: SaveQuizDto,
     @UiLocale() ui: 'en' | 'vi',
-  ) {
+  ): Promise<AdminSaveResult> {
     return this.quiz.update(id, dto, user.id, adminRules(ui));
   }
 
@@ -220,7 +240,7 @@ export class AdminController {
     @Param('id') id: string,
     @Body() dto: StatusDto,
     @UiLocale() ui: 'en' | 'vi',
-  ) {
+  ): Promise<AdminStatusResult> {
     return this.quiz.setStatus(id, dto.status, user.id, adminRules(ui));
   }
 
@@ -229,19 +249,19 @@ export class AdminController {
     @CurrentUser() user: AuthedUser,
     @Param('id') id: string,
     @UiLocale() ui: 'en' | 'vi',
-  ) {
+  ): Promise<OkResponse> {
     return this.quiz.remove(id, user.id, ui);
   }
 
   // ─── Brand handbook ───
 
   @Get('brands')
-  listBrands() {
+  listBrands(): Promise<AdminBrand[]> {
     return this.brands.list();
   }
 
   @Post('brands')
-  createBrand(@CurrentUser() user: AuthedUser, @Body() dto: CreateBrandDto) {
+  createBrand(@CurrentUser() user: AuthedUser, @Body() dto: CreateBrandDto): Promise<IdResponse> {
     return this.brands.create(dto, user.id);
   }
 
@@ -250,19 +270,19 @@ export class AdminController {
     @CurrentUser() user: AuthedUser,
     @Param('id') id: string,
     @Body() dto: UpdateBrandDto,
-  ) {
+  ): Promise<IdResponse> {
     return this.brands.update(id, dto, user.id);
   }
 
   @Delete('brands/:id')
-  deleteBrand(@CurrentUser() user: AuthedUser, @Param('id') id: string) {
+  deleteBrand(@CurrentUser() user: AuthedUser, @Param('id') id: string): Promise<OkResponse> {
     return this.brands.remove(id, user.id);
   }
 
   // ─── Audit log ───
 
   @Get('audit')
-  listAudit(@Query('entity') entity?: string, @Query('entityId') entityId?: string) {
+  listAudit(@Query('entity') entity?: string, @Query('entityId') entityId?: string): Promise<AdminAuditEntry[]> {
     return this.audit.list({ entity, entityId });
   }
 }

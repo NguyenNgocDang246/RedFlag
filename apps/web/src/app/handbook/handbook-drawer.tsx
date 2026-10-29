@@ -10,21 +10,23 @@ import s from './handbook.module.css';
 
 /**
  * 📖 button + handbook drawer, opened during a quiz.
- * Data is loaded only on first open.
+ * Each language is loaded on its first open and kept — switching language loads that
+ * language's brands, because a brand belongs to one locale (there is no translation table).
  */
 export function HandbookButton({ locale, label }: { locale: Locale; label: string }) {
   const t = HANDBOOK_T[locale];
   const [open, setOpen] = useState(false);
-  const [brands, setBrands] = useState<Brand[] | null>(null);
+  const [cache, setCache] = useState<Partial<Record<Locale, Brand[]>>>({});
   const [error, setError] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const brands = cache[locale] ?? null;
 
   useEffect(() => {
     if (!open || brands) return;
     let alive = true;
     setError(false);
     fetchBrands(locale)
-      .then((b) => alive && setBrands(b))
+      .then((b) => alive && setCache((c) => ({ ...c, [locale]: b })))
       .catch(() => alive && setError(true));
     return () => {
       alive = false;

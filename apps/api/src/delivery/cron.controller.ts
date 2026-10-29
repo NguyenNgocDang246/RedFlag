@@ -7,8 +7,10 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DeliveryService } from './delivery.service';
 import { SchedulerService } from './scheduler.service';
+import { CronDailyResponse } from './dto/delivery-response.dto';
 
 /** Constant-time compare, so the secret can't be guessed byte by byte from response times. */
 function sameSecret(given: string, expected: string): boolean {
@@ -24,6 +26,8 @@ function sameSecret(given: string, expected: string): boolean {
  *
  * Vercel Cron sends `Authorization: Bearer $CRON_SECRET`; nothing else can trigger it.
  */
+@ApiTags('cron')
+@ApiBearerAuth()
 @Controller('cron')
 export class CronController {
   private readonly logger = new Logger(CronController.name);
@@ -34,7 +38,7 @@ export class CronController {
   ) {}
 
   @Get('daily')
-  async daily(@Headers('authorization') authorization?: string) {
+  async daily(@Headers('authorization') authorization?: string): Promise<CronDailyResponse> {
     const secret = process.env.CRON_SECRET?.trim();
     if (!secret) throw new ServiceUnavailableException('CRON_SECRET is not set');
     if (!authorization || !sameSecret(authorization, `Bearer ${secret}`)) throw new UnauthorizedException();
