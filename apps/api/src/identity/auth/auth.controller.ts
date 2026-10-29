@@ -16,6 +16,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { ApiCookieAuth, ApiFoundResponse, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
 import { AuthThrottlerGuard } from '../../throttle/auth-throttler.guard';
@@ -42,6 +43,12 @@ import {
   type AuthedUser,
 } from './jwt-auth.guard';
 import { SessionService, type IssuedRefresh } from './session.service';
+import { OkResponse } from '../../common/responses.dto';
+import {
+  AuthProvidersResponse,
+  MeResponse,
+  SessionView,
+} from '../dto/identity-response.dto';
 
 const REFRESH_PATH = '/api/auth'; // refresh cookie is only sent to auth routes
 const OAUTH_STATE_TTL_MS = 10 * 60 * 1000; // long enough to pick an account, short enough to be useless later
@@ -59,6 +66,7 @@ function baseCookie(): CookieOptions {
   };
 }
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -91,7 +99,7 @@ export class AuthController {
 
   @Post('register')
   @UseGuards(AuthThrottlerGuard)
-  register(@Body() dto: RegisterDto) {
+  register(@Body() dto: RegisterDto): Promise<OkResponse> {
     return this.auth.register(dto.email, dto.password, dto.locale);
   }
 
@@ -99,7 +107,7 @@ export class AuthController {
   @HttpCode(200)
   @UseGuards(AuthThrottlerGuard)
   @SkipThrottle({ [MAIL_THROTTLER]: true })
-  verify(@Body() dto: VerifyEmailDto) {
+  verify(@Body() dto: VerifyEmailDto): Promise<OkResponse> {
     return this.auth.verifyEmail(dto.token);
   }
 
@@ -110,7 +118,7 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(200)
   @UseGuards(AuthThrottlerGuard)
-  forgotPassword(@Body() dto: ForgotPasswordDto) {
+  forgotPassword(@Body() dto: ForgotPasswordDto): Promise<OkResponse> {
     return this.auth.requestPasswordReset(dto.email, dto.locale);
   }
 
@@ -119,7 +127,7 @@ export class AuthController {
   @HttpCode(200)
   @UseGuards(AuthThrottlerGuard)
   @SkipThrottle({ [MAIL_THROTTLER]: true })
-  async resetPassword(@Body() dto: ResetPasswordDto) {
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<OkResponse> {
     const userId = await this.auth.resetPassword(dto.token, dto.password);
     // A reset may follow a break-in, so nothing stays signed in — not even this browser.
     await this.sessions.revokeAllForUser(userId);
@@ -130,13 +138,13 @@ export class AuthController {
   @Post('resend-verification')
   @HttpCode(200)
   @UseGuards(AuthThrottlerGuard)
-  resendVerification(@Body() dto: ResendVerificationDto) {
+  resendVerification(@Body() dto: ResendVerificationDto): Promise<OkResponse> {
     return this.auth.resendVerification(dto.email, dto.locale);
   }
 
   /** Which sign-in methods this deployment has — the web hides the Google button without it. */
   @Get('providers')
-  providers() {
+  providers(): AuthProvidersResponse {
     return { google: this.google.configured };
   }
 
@@ -148,7 +156,7 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Headers('user-agent') userAgent: string | undefined,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<MeResponse> {
     const userId = await this.auth.validateAndLogin(dto.email, dto.password);
     const refresh = await this.sessions.create(userId, userAgent);
     this.setAuthCookies(res, userId, refresh);
@@ -158,7 +166,7 @@ export class AuthController {
   /** Rotates the refresh token -> issues new access + refresh tokens. */
   @Post('refresh')
   @HttpCode(200)
-  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<OkResponse> {
     const raw = req.cookies?.[REFRESH_COOKIE] as string | undefined;
     if (!raw) throw new UnauthorizedException('No refresh token');
     const rotated = await this.sessions.rotate(raw);
@@ -172,6 +180,7 @@ export class AuthController {
    * On failure → clear cookies (incl. the session flag) and still redirect: the page renders as guest, no loop.
    */
   @Get('refresh')
+  @ApiFoundResponse({ description: 'Redirects back to the web page in `next`, signed in or as a guest.' })
   async refreshRedirect(
     @Req() req: Request,
     @Res() res: Response,
@@ -191,7 +200,7 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(200)
-  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<OkResponse> {
     const raw = req.cookies?.[REFRESH_COOKIE] as string | undefined;
     if (raw) await this.sessions.revoke(raw);
     this.clearAuthCookies(res);
@@ -203,6 +212,7 @@ export class AuthController {
    * The cookie is path-scoped to /api/auth, like the refresh cookie, so it only comes back here.
    */
   @Get('google')
+  @ApiFoundResponse({ description: 'Redirects to Google sign-in.' })
   async googleStart(
     @Res() res: Response,
     @Query('locale') locale?: string,
@@ -224,6 +234,7 @@ export class AuthController {
    * because there is no one here to read an error page.
    */
   @Get('google/callback')
+  @ApiFoundResponse({ description: 'Redirects into the web app, or to /login with a notice.' })
   async googleCallback(
     @Req() req: Request,
     @Res() res: Response,
@@ -254,15 +265,17 @@ export class AuthController {
   }
 
   @Get('me')
+  @ApiCookieAuth()
   @UseGuards(JwtAuthGuard)
-  me(@CurrentUser() user: AuthedUser) {
+  me(@CurrentUser() user: AuthedUser): Promise<MeResponse> {
     return this.auth.me(user.id);
   }
 
   /** Personal info (name, occupation, services, language) — all optional. */
   @Patch('me')
+  @ApiCookieAuth()
   @UseGuards(JwtAuthGuard)
-  updateProfile(@CurrentUser() user: AuthedUser, @Body() dto: UpdateProfileDto) {
+  updateProfile(@CurrentUser() user: AuthedUser, @Body() dto: UpdateProfileDto): Promise<MeResponse> {
     return this.auth.updateProfile(user.id, dto);
   }
 
@@ -272,8 +285,9 @@ export class AuthController {
    */
   @Post('password')
   @HttpCode(200)
+  @ApiCookieAuth()
   @UseGuards(JwtAuthGuard)
-  async changePassword(@CurrentUser() user: AuthedUser, @Req() req: Request, @Body() dto: ChangePasswordDto) {
+  async changePassword(@CurrentUser() user: AuthedUser, @Req() req: Request, @Body() dto: ChangePasswordDto): Promise<OkResponse> {
     await this.auth.changePassword(user.id, dto.currentPassword, dto.newPassword);
     await this.sessions.revokeOthers(user.id, req.cookies?.[REFRESH_COOKIE] as string | undefined);
     return { ok: true };
@@ -281,22 +295,25 @@ export class AuthController {
 
   /** Signed-in devices. Lives under /auth so the refresh cookie arrives and marks the current one. */
   @Get('sessions')
+  @ApiCookieAuth()
   @UseGuards(JwtAuthGuard)
-  listSessions(@CurrentUser() user: AuthedUser, @Req() req: Request) {
+  listSessions(@CurrentUser() user: AuthedUser, @Req() req: Request): Promise<SessionView[]> {
     return this.sessions.list(user.id, req.cookies?.[REFRESH_COOKIE] as string | undefined);
   }
 
   @Post('sessions/revoke-others')
   @HttpCode(200)
+  @ApiCookieAuth()
   @UseGuards(JwtAuthGuard)
-  async revokeOtherSessions(@CurrentUser() user: AuthedUser, @Req() req: Request) {
+  async revokeOtherSessions(@CurrentUser() user: AuthedUser, @Req() req: Request): Promise<OkResponse> {
     await this.sessions.revokeOthers(user.id, req.cookies?.[REFRESH_COOKIE] as string | undefined);
     return { ok: true };
   }
 
   @Delete('sessions/:id')
+  @ApiCookieAuth()
   @UseGuards(JwtAuthGuard)
-  async revokeSession(@CurrentUser() user: AuthedUser, @Param('id') id: string) {
+  async revokeSession(@CurrentUser() user: AuthedUser, @Param('id') id: string): Promise<OkResponse> {
     if (!(await this.sessions.revokeById(user.id, id))) throw new NotFoundException('Session not found');
     return { ok: true };
   }

@@ -9,10 +9,12 @@ import {
   UnauthorizedException,
   type RawBodyRequest,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { InboundReportService } from './inbound-report.service';
 import { MailFeedbackService } from './mail-feedback.service';
 import { verifySvix } from './svix-verify';
+import { OkResponse } from '../common/responses.dto';
 
 /**
  * Resend's webhook. One endpoint, several event types:
@@ -22,6 +24,7 @@ import { verifySvix } from './svix-verify';
  * Public by necessity, so the Svix signature over the raw body is what authorises a call. Nothing
  * about the mail is logged or stored — only whether it matched a campaign (R2).
  */
+@ApiTags('inbound')
 @Controller('inbound')
 export class InboundController {
   private readonly logger = new Logger(InboundController.name);
@@ -39,7 +42,7 @@ export class InboundController {
     @Headers('svix-id') id?: string,
     @Headers('svix-timestamp') timestamp?: string,
     @Headers('svix-signature') signature?: string,
-  ) {
+  ): Promise<OkResponse> {
     const secret = process.env.RESEND_WEBHOOK_SECRET?.trim();
     if (!secret) {
       if (!this.warnedNoSecret) {

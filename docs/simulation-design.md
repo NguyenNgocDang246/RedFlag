@@ -128,7 +128,7 @@ Lưu ý về số tổng đài: sổ tay có cột `hotlines`, nên một số l
 
 | Mức | Bài lừa | Bài an toàn |
 |---|---|---|
-| 1 | **#272** Trang voucher ChợXanh | **#294** Gói data sắp hết |
+| 1 | **#272** Trang voucher Chợ Xanh | **#294** Gói data sắp hết |
 | 2 | **#336** Thiết bị mới trên tài khoản xem phim (`phirnplus.vn`) | **#300** App lịch xin quyền |
 | 3 | *chưa có* | **#335** Nhà cung cấp đổi tài khoản |
 

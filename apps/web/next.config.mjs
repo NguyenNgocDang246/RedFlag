@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Don't advertise the framework (`X-Powered-By: Next.js`).
+  poweredByHeader: false,
   // Let Next compile TS workspace packages directly.
   transpilePackages: ['@redflag/shared'],
 
